@@ -576,7 +576,34 @@ class CompletionModel extends HiveObject {
 
 ---
 
-### 6.6 Habit Stacks Screen
+### 6.6 Analytics Screen (formerly Scorecard)
+- [x] Rename scorecard to analytics throughout codebase
+- [x] Redesign as read-only visual scorecard (no accidental edits)
+- [x] Fill vertical space, prettier cells, better typography
+- [x] Add summary stat cards (completion rate, count, habit count)
+- [x] Today highlight in header, habit color indicators, check marks in cells
+- [ ] Add heatmap or trend chart below grid (future)
+
+#### Testing Phase 6.6
+- [x] Grid displays correct completion states
+- [x] No accidental edits possible
+- [x] Fills screen beautifully
+- [ ] Stats are accurate (needs manual verification)
+
+---
+
+### 6.7 Settings Screen
+- [ ] Implement app info section
+- [ ] Implement archived habits access
+- [ ] Implement about/credits
+
+---
+
+## Deferred to v2
+
+The following features are preserved for future development. They are not blockers for v1.
+
+### Habit Stacks Screen
 - [ ] Create `presentation/screens/stacks/stacks_screen.dart`
 - [ ] Implement list of all stacks/chains
 - [ ] Implement chain visualization
@@ -584,138 +611,33 @@ class CompletionModel extends HiveObject {
 - [ ] Implement create new stack flow
 - [ ] Implement edit/delete stack
 
-#### Testing Phase 6.6
-- [ ] All chains display
-- [ ] Visual flow is clear
-- [ ] Can create new chains
-- [ ] Can modify existing chains
+### Analytics Drill-Down Screens
+- [ ] Streaks detail, completion detail, heatmap detail, trends
+- [ ] Date range filters, habit filters, comparison views
 
----
+### Habit Analytics Screen (per-habit deep dive)
+- [ ] Full history for single habit
+- [ ] All stats, streak timeline, notes history, per-habit heatmap
 
-### 6.7 Analytics Dashboard Screen
-- [ ] Create `presentation/screens/analytics/analytics_dashboard_screen.dart`
-- [ ] Implement stat cards (best streak, completion rate)
-- [ ] Implement weekly bar chart
-- [ ] Implement activity heatmap
-- [ ] Implement best days list
-- [ ] Implement top habits list
-- [ ] Add navigation to drill-down views
+### Notifications Service
+- [ ] Permission request flow
+- [ ] Schedule/cancel notifications
+- [ ] Tap handling, quick-complete, snooze
+- [ ] Stack triggers after completion
 
-#### Testing Phase 6.7
-- [ ] All metrics display correctly
-- [ ] Charts animate on load
-- [ ] Tapping cards navigates to details
-- [ ] Performance is acceptable
+### CSV Export Service
+- [ ] Export all habits/completions
+- [ ] Date range filter, share/save file
 
----
-
-### 6.8 Analytics Drill-Down Screens
-- [ ] Create `presentation/screens/analytics/streaks_detail_screen.dart`
-- [ ] Create `presentation/screens/analytics/completion_detail_screen.dart`
-- [ ] Create `presentation/screens/analytics/heatmap_detail_screen.dart`
-- [ ] Create `presentation/screens/analytics/trends_screen.dart`
-- [ ] Implement date range filters
-- [ ] Implement habit filters
-- [ ] Implement comparison views
-
-#### Testing Phase 6.8
-- [ ] Filters work correctly
-- [ ] Data matches dashboard
-- [ ] Navigation is intuitive
-
----
-
-### 6.9 Habit Analytics Screen
-- [ ] Create `presentation/screens/analytics/habit_analytics_screen.dart`
-- [ ] Implement full history for single habit
-- [ ] Implement all stats for that habit
-- [ ] Implement streak timeline
-- [ ] Implement notes history
-- [ ] Implement heatmap for habit
-
-#### Testing Phase 6.9
-- [ ] All data specific to habit
-- [ ] Streak timeline is accurate
-- [ ] Notes display in order
-
----
-
-### 6.10 Settings Screen
-- [ ] Create `presentation/screens/settings/settings_screen.dart`
-- [ ] Implement app info section
-- [ ] Implement notification settings
-- [ ] Implement data export (CSV)
-- [ ] Implement archived habits access
-- [ ] Implement about/credits
-
-#### Testing Phase 6.10
-- [ ] All settings persist
-- [ ] CSV export works
-- [ ] Archived habits accessible
-
----
-
-## Phase 7: Features
-
-### 7.1 Notifications Service
-- [ ] Create `services/notification_service.dart`
-- [ ] Implement permission request flow
-- [ ] Implement schedule notification for habit
-- [ ] Implement cancel notification
-- [ ] Implement notification tap handling
-- [ ] Implement quick-complete action
-- [ ] Implement snooze functionality
-- [ ] Handle notification trigger after habit completion (stacks)
-
-#### Testing Phase 7.1
-- [ ] Notifications appear at scheduled time
-- [ ] Tapping opens correct habit
-- [ ] Quick-complete marks habit done
-- [ ] Snooze reschedules correctly
-- [ ] Stack triggers fire after completion
-
----
-
-### 7.2 CSV Export Service
-- [ ] Create `services/export_service.dart`
-- [ ] Implement export all habits
-- [ ] Implement export all completions
-- [ ] Implement export with date range filter
-- [ ] Implement share/save file
-
-#### Testing Phase 7.2
-- [ ] CSV generates correctly
-- [ ] All data included
-- [ ] File can be opened in Excel/Sheets
-- [ ] Share dialog works
-
----
-
-### 7.3 Streak Milestone Celebrations
-- [ ] Implement confetti animation widget
-- [ ] Trigger on streak milestones (7, 30, 60, 90, 365)
+### Streak Milestone Celebrations
+- [ ] Confetti animation on milestones (7, 30, 60, 90, 365)
 - [ ] Store milestone achievements
 
-#### Testing Phase 7.3
-- [ ] Confetti appears on milestone
-- [ ] Animation is performant
-- [ ] Milestones only trigger once
+### Accessibility
+- [ ] Semantic labels, TalkBack testing, WCAG AA contrast, font scaling
 
----
-
-## Phase 8: Polish & Performance
-
-### 8.1 Animations & Micro-interactions
-- [ ] Refine habit completion animation
-- [ ] Add page transition animations
-- [ ] Add list item stagger animations
-- [ ] Add chart draw-in animations
-- [ ] Ensure 60fps throughout
-
-#### Testing Phase 8.1
-- [ ] All animations smooth
-- [ ] No jank during interactions
-- [ ] Animations can be disabled for accessibility
+### Performance Optimization
+- [ ] Profile startup, optimize DB queries, pagination, loading states
 
 ---
 
@@ -830,10 +752,10 @@ class CompletionModel extends HiveObject {
 
 ## Current Status
 
-**Current Phase:** Phase 6 - Screens (incremental replacement of placeholders)
-**Current Task:** Resolve current UX/bug feedback: scorecard behavior + detail edit reliability + schedule UX + completion animation refactor
-**Last Updated:** 2026-02-06
-**Blockers:** Completion toggle animation refactor interrupted mid-change (`habit_checkbox.dart` replacement in progress)
+**Current Phase:** Phase 6 - Screens (core screens functional, polish in progress)
+**Current Task:** All critical bugs resolved. Scorecard renamed to Analytics. 4-tab nav. Ready for manual QA.
+**Last Updated:** 2026-02-05
+**Blockers:** None
 
 ---
 
@@ -850,6 +772,10 @@ class CompletionModel extends HiveObject {
 - **PROGRESS 2026-02-06:** Added shared create/edit habit form sheet with weekly multi-day selection, monthly date multi-select, and calendar-assisted date picking.
 - **PROGRESS 2026-02-06:** Reworked scorecard to a rolling timeline grid and added refresh/horizontal-scroll improvements.
 - **FEEDBACK 2026-02-06:** Remaining fixes requested: scorecard edit-guardrails, detail edit reliability, completion animation redesign, and overflow/polish issues.
+- **PROGRESS 2026-02-05 (Claude):** Phase A - Created habit_checkbox.dart, fixed Scrollbar ScrollController crash, hardened Hive init with corruption recovery.
+- **PROGRESS 2026-02-05 (Claude):** Phase B - Fixed edit from detail screen, added bottom padding for chart overlap, replaced month picker with calendar grid, made analytics grid read-only.
+- **PROGRESS 2026-02-05 (Claude):** Phase C - Redesigned completion animation (bounce-scale + color fill), overhauled analytics screen (summary cards, today highlight, color indicators), consolidated to 4-tab nav (removed empty Analytics placeholder, renamed Scorecard to Analytics).
+- **DECISION 2026-02-05:** Deferred stacks, notifications, CSV export, drill-down analytics, accessibility, and performance optimization to v2.
 - Riverpod chosen for testability and clean state management
 - Clean Architecture for maintainability
 - Dark mode only for v1 (light mode can be added later)
