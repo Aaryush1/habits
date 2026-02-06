@@ -11,7 +11,6 @@ import '../../providers/habits_provider.dart';
 import '../../widgets/common/empty_state.dart';
 import '../../widgets/common/loading_indicator.dart';
 
-/// Analytics screen showing rolling completion grid.
 class ScorecardScreen extends ConsumerStatefulWidget {
   const ScorecardScreen({super.key});
 
@@ -37,126 +36,159 @@ class _ScorecardScreenState extends ConsumerState<ScorecardScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: AppSpacing.screenPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppSpacing.space16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text('Scorecard', style: AppTypography.displayMedium),
-                  ),
-                  IconButton(
-                    tooltip: 'Refresh',
-                    onPressed: () {
-                      ref.invalidate(habitsProvider);
-                      ref.invalidate(completionsForRangeProvider(rangeKey));
-                    },
-                    icon: const Icon(Icons.refresh),
-                  ),
-                ],
-              ),
-              Text(
-                'Rolling ${days.length}-day view',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+        child: habitsAsync.when(
+          loading: () => const LoadingIndicator(message: 'Loading analytics'),
+          error: (error, stackTrace) => Center(
+            child: Text('Failed to load data', style: AppTypography.bodyMedium),
+          ),
+          data: (habits) {
+            if (habits.isEmpty) {
+              return Padding(
+                padding: AppSpacing.screenPadding,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: AppSpacing.space16),
+                    Text('Analytics', style: AppTypography.displayMedium),
+                    const Expanded(
+                      child: EmptyState(
+                        title: 'No habits yet',
+                        description:
+                            'Create habits from the Habits tab to see your analytics here.',
+                        icon: Icons.analytics_outlined,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return completionsAsync.when(
+              loading: () =>
+                  const LoadingIndicator(message: 'Loading completions'),
+              error: (error, stackTrace) => Center(
+                child: Text(
+                  'Failed to load completions',
+                  style: AppTypography.bodyMedium,
                 ),
               ),
-              const SizedBox(height: AppSpacing.space16),
-              Expanded(
-                child: habitsAsync.when(
-                  loading: () => const LoadingIndicator(message: 'Loading scorecard'),
-                  error: (error, stackTrace) => Center(
-                    child: Text(
-                      'Failed to load scorecard',
-                      style: AppTypography.bodyMedium,
-                    ),
-                  ),
-                  data: (habits) {
-                    if (habits.isEmpty) {
-                      return const EmptyState(
-                        title: 'No habits to score',
-                        description: 'Create habits first, then track them here.',
-                        icon: Icons.grid_view_outlined,
-                      );
-                    }
+              data: (completions) {
+                final completionMap = _buildCompletionMap(completions);
+                final summary = _buildSummary(
+                  habits: habits,
+                  days: days,
+                  completionMap: completionMap,
+                );
+                final rate = summary.total == 0
+                    ? 0.0
+                    : summary.completed / summary.total;
 
-                    return completionsAsync.when(
-                      loading: () =>
-                          const LoadingIndicator(message: 'Loading completions'),
-                      error: (error, stackTrace) => Center(
-                        child: Text(
-                          'Failed to load completions',
-                          style: AppTypography.bodyMedium,
-                        ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.space16,
+                        AppSpacing.space16,
+                        AppSpacing.space16,
+                        0,
                       ),
-                      data: (completions) {
-                        final completionMap = _buildCompletionMap(completions);
-                        final summary = _buildSummary(
-                          habits: habits,
-                          days: days,
-                          completionMap: completionMap,
-                        );
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${summary.completed}/${summary.total} checks complete',
-                              style: AppTypography.labelLarge,
+                      child: Text(
+                        'Analytics',
+                        style: AppTypography.displayMedium,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.space16),
+
+                    // Summary cards row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.space16,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _SummaryCard(
+                              label: 'Completion',
+                              value: '${(rate * 100).round()}%',
+                              progress: rate,
                             ),
-                            const SizedBox(height: AppSpacing.space8),
-                            LinearProgressIndicator(
-                              value: summary.total == 0
-                                  ? 0
-                                  : summary.completed / summary.total,
-                              minHeight: 6,
-                              backgroundColor: AppColors.backgroundQuaternary,
+                          ),
+                          const SizedBox(width: AppSpacing.space12),
+                          Expanded(
+                            child: _SummaryCard(
+                              label: 'Completed',
+                              value:
+                                  '${summary.completed}/${summary.total}',
+                              progress: rate,
                             ),
-                            const SizedBox(height: AppSpacing.space16),
-                            _buildLegend(),
-                            const SizedBox(height: AppSpacing.space12),
-                            Expanded(
-                              child: Scrollbar(
-                                controller: _horizontalScrollController,
-                                thumbVisibility: true,
-                                child: SingleChildScrollView(
-                                  controller: _horizontalScrollController,
-                                  scrollDirection: Axis.horizontal,
-                                  child: SizedBox(
-                                    width: 120 + (days.length * 34),
-                                    child: Column(
-                                      children: [
-                                        _HeaderRow(days: days),
-                                        const SizedBox(height: AppSpacing.space8),
-                                        Expanded(
-                                          child: ListView.builder(
-                                            itemCount: habits.length,
-                                            itemBuilder: (context, index) {
-                                              return _HabitGridRow(
-                                                habit: habits[index],
-                                                days: days,
-                                                completionMap: completionMap,
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ],
+                          ),
+                          const SizedBox(width: AppSpacing.space12),
+                          Expanded(
+                            child: _SummaryCard(
+                              label: 'Habits',
+                              value: '${habits.length}',
+                              progress: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.space16),
+
+                    // Legend
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.space16,
+                      ),
+                      child: _buildLegend(),
+                    ),
+                    const SizedBox(height: AppSpacing.space12),
+
+                    // Grid - fills remaining space
+                    Expanded(
+                      child: Scrollbar(
+                        controller: _horizontalScrollController,
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.space16,
+                          ),
+                          child: SizedBox(
+                            width: 110.0 + (days.length * 30),
+                            child: Column(
+                              children: [
+                                _HeaderRow(days: days),
+                                const Divider(height: 1),
+                                Expanded(
+                                  child: ListView.builder(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 16,
                                     ),
+                                    itemCount: habits.length,
+                                    itemBuilder: (context, index) {
+                                      return _HabitGridRow(
+                                        habit: habits[index],
+                                        days: days,
+                                        completionMap: completionMap,
+                                      );
+                                    },
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
       ),
     );
@@ -193,11 +225,10 @@ class _ScorecardScreenState extends ConsumerState<ScorecardScreen> {
     var completed = 0;
     for (final habit in habits) {
       for (final day in days) {
-        if (!_isHabitScheduledOn(habit, day)) {
-          continue;
-        }
+        if (!_isHabitScheduledOn(habit, day)) continue;
         total++;
-        final completion = completionMap['${habit.id}_${day.toIso8601String()}'];
+        final completion =
+            completionMap['${habit.id}_${day.toIso8601String()}'];
         if (completion != null &&
             completion.completionType != HabitCompletionType.skipped) {
           completed++;
@@ -208,43 +239,113 @@ class _ScorecardScreenState extends ConsumerState<ScorecardScreen> {
   }
 }
 
+// --- Private helpers ---
+
 class _Summary {
   const _Summary({required this.total, required this.completed});
-
   final int total;
   final int completed;
 }
 
-class _HeaderRow extends StatelessWidget {
-  const _HeaderRow({required this.days});
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.label,
+    required this.value,
+    required this.progress,
+  });
 
-  final List<DateTime> days;
+  final String label;
+  final String value;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const SizedBox(
-          width: 120,
-          child: Text('Habit'),
-        ),
-        ...days.map(
-          (day) => SizedBox(
-            width: 34,
-            child: Column(
-              children: [
-                Text(DateFormat('E').format(day)[0], style: AppTypography.labelSmall),
-                Text('${day.day}', style: AppTypography.labelSmall),
-              ],
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.space12),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textTertiary,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(value, style: AppTypography.headlineLarge),
+        ],
+      ),
     );
   }
 }
 
-class _HabitGridRow extends ConsumerWidget {
+class _HeaderRow extends StatelessWidget {
+  const _HeaderRow({required this.days});
+  final List<DateTime> days;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          const SizedBox(width: 110),
+          ...days.map((day) {
+            final isToday = day == today;
+            return SizedBox(
+              width: 30,
+              child: Column(
+                children: [
+                  Text(
+                    DateFormat('E').format(day)[0],
+                    style: AppTypography.labelSmall.copyWith(
+                      color: isToday
+                          ? AppColors.accentGold
+                          : AppColors.textTertiary,
+                      fontSize: 10,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Container(
+                    width: 20,
+                    height: 20,
+                    alignment: Alignment.center,
+                    decoration: isToday
+                        ? BoxDecoration(
+                            color: AppColors.accentGold,
+                            borderRadius: BorderRadius.circular(6),
+                          )
+                        : null,
+                    child: Text(
+                      '${day.day}',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: isToday
+                            ? AppColors.textInverse
+                            : AppColors.textSecondary,
+                        fontSize: 10,
+                        fontWeight:
+                            isToday ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _HabitGridRow extends StatelessWidget {
   const _HabitGridRow({
     required this.habit,
     required this.days,
@@ -256,17 +357,32 @@ class _HabitGridRow extends ConsumerWidget {
   final Map<String, Completion> completionMap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           SizedBox(
-            width: 120,
-            child: Text(
-              habit.name,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.bodySmall,
+            width: 110,
+            child: Row(
+              children: [
+                Container(
+                  width: 3,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: _parseColor(habit.colorHex) ?? AppColors.accentGold,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    habit.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySmall,
+                  ),
+                ),
+              ],
             ),
           ),
           ...days.map((day) {
@@ -275,17 +391,39 @@ class _HabitGridRow extends ConsumerWidget {
             final scheduled = _isHabitScheduledOn(habit, day);
             final isCompleted = completion != null &&
                 completion.completionType != HabitCompletionType.skipped;
-            final isSkipped = completion?.completionType == HabitCompletionType.skipped;
-            final color = !scheduled
-                ? AppColors.backgroundQuaternary
-                : isCompleted
-                    ? AppColors.completionGreen
-                    : isSkipped
-                        ? AppColors.skippedGray
-                        : AppColors.borderSubtle;
+            final isSkipped =
+                completion?.completionType == HabitCompletionType.skipped;
+
+            Color color;
+            if (!scheduled) {
+              color = AppColors.backgroundPrimary;
+            } else if (isCompleted) {
+              color = AppColors.completionGreen;
+            } else if (isSkipped) {
+              color = AppColors.skippedGray;
+            } else {
+              color = AppColors.backgroundTertiary;
+            }
+
             return SizedBox(
-              width: 34,
-              child: _cell(color: color),
+              width: 30,
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: isCompleted
+                      ? const Icon(
+                          Icons.check_rounded,
+                          size: 12,
+                          color: AppColors.textInverse,
+                        )
+                      : null,
+                ),
+              ),
             );
           }),
         ],
@@ -293,32 +431,37 @@ class _HabitGridRow extends ConsumerWidget {
     );
   }
 
-  Widget _cell({required Color color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Container(
-        height: 22,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(4),
-        ),
-      ),
-    );
+  Color? _parseColor(String? hex) {
+    if (hex == null || hex.isEmpty) return null;
+    try {
+      final normalized = hex.replaceAll('#', '');
+      final value = int.parse(
+        normalized.length == 6 ? 'FF$normalized' : normalized,
+        radix: 16,
+      );
+      return Color(value);
+    } catch (_) {
+      return null;
+    }
   }
 }
 
 Widget _buildLegend() {
-  Widget item(Color color, String label) {
+  Widget item(Color color, String label, {bool showCheck = false}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 14,
+          height: 14,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(4),
           ),
+          child: showCheck
+              ? const Icon(Icons.check_rounded,
+                  size: 10, color: AppColors.textInverse)
+              : null,
         ),
         const SizedBox(width: 6),
         Text(label, style: AppTypography.labelSmall),
@@ -330,10 +473,9 @@ Widget _buildLegend() {
     spacing: 16,
     runSpacing: 8,
     children: [
-      item(AppColors.completionGreen, 'Complete'),
+      item(AppColors.completionGreen, 'Done', showCheck: true),
       item(AppColors.skippedGray, 'Skipped'),
-      item(AppColors.borderSubtle, 'Incomplete'),
-      item(AppColors.backgroundQuaternary, 'Not scheduled'),
+      item(AppColors.backgroundTertiary, 'Missed'),
     ],
   );
 }

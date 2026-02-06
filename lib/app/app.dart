@@ -5,7 +5,6 @@ import 'router.dart';
 import '../presentation/screens/home/home_screen.dart';
 import '../presentation/screens/scorecard/scorecard_screen.dart';
 import '../presentation/screens/habits/habits_list_screen.dart';
-import '../presentation/screens/analytics/analytics_dashboard_screen.dart';
 import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/widgets/navigation/bottom_nav_bar.dart';
 
@@ -38,9 +37,8 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   final List<Widget> _screens = const [
     HomeScreen(),
-    ScorecardScreen(),
     HabitsListScreen(),
-    AnalyticsDashboardScreen(),
+    ScorecardScreen(),
     SettingsScreen(),
   ];
 

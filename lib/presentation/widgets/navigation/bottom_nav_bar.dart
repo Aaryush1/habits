@@ -22,11 +22,6 @@ class AppBottomNavBar extends StatelessWidget {
           label: 'Today',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.grid_view_outlined),
-          activeIcon: Icon(Icons.grid_view),
-          label: 'Scorecard',
-        ),
-        BottomNavigationBarItem(
           icon: Icon(Icons.list_outlined),
           activeIcon: Icon(Icons.list),
           label: 'Habits',
