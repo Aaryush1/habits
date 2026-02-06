@@ -11,12 +11,25 @@ import '../../providers/habits_provider.dart';
 import '../../widgets/common/empty_state.dart';
 import '../../widgets/common/loading_indicator.dart';
 
-/// Scorecard screen showing rolling completion grid.
-class ScorecardScreen extends ConsumerWidget {
+/// Analytics screen showing rolling completion grid.
+class ScorecardScreen extends ConsumerStatefulWidget {
   const ScorecardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ScorecardScreen> createState() => _ScorecardScreenState();
+}
+
+class _ScorecardScreenState extends ConsumerState<ScorecardScreen> {
+  final _horizontalScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final habitsAsync = ref.watch(habitsProvider);
     final days = _buildDays();
     final rangeKey = DateRangeKey(start: days.first, end: days.last);
@@ -106,8 +119,10 @@ class ScorecardScreen extends ConsumerWidget {
                             const SizedBox(height: AppSpacing.space12),
                             Expanded(
                               child: Scrollbar(
+                                controller: _horizontalScrollController,
                                 thumbVisibility: true,
                                 child: SingleChildScrollView(
+                                  controller: _horizontalScrollController,
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
                                     width: 120 + (days.length * 34),

@@ -19,7 +19,15 @@ class HiveDatabase {
 
     await Hive.initFlutter();
     _registerAdapters();
-    await _openBoxes();
+    try {
+      await _openBoxes();
+    } catch (e) {
+      // If boxes are corrupted, delete and re-open them
+      await Hive.deleteFromDisk();
+      await Hive.initFlutter();
+      _registerAdapters();
+      await _openBoxes();
+    }
     _isInitialized = true;
   }
 
