@@ -285,18 +285,7 @@ class _HabitGridRow extends ConsumerWidget {
                         : AppColors.borderSubtle;
             return SizedBox(
               width: 34,
-              child: _cell(
-                color: color,
-                enabled: scheduled,
-                onTap: () {
-                  if (!scheduled) {
-                    return;
-                  }
-                  ref
-                      .read(completionsProvider(day).notifier)
-                      .toggleCompletion(habitId: habit.id);
-                },
-              ),
+              child: _cell(color: color),
             );
           }),
         ],
@@ -304,22 +293,14 @@ class _HabitGridRow extends ConsumerWidget {
     );
   }
 
-  Widget _cell({
-    required Color color,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
+  Widget _cell({required Color color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(4),
-        child: Container(
-          height: 22,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
+      child: Container(
+        height: 22,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(4),
         ),
       ),
     );

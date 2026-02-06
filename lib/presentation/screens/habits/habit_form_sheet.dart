@@ -123,44 +123,49 @@ Future<Habit?> showHabitFormSheet({
                 ],
                 if (scheduleType == HabitScheduleType.monthly) ...[
                   const SizedBox(height: AppSpacing.space12),
-                  Row(
-                    children: [
-                      const Expanded(child: Text('Select month dates')),
-                      TextButton.icon(
-                        onPressed: () async {
-                          final selected = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
-                          );
-                          if (selected != null) {
-                            setModalState(() {
-                              selectedMonthDates.add(selected.day);
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                        label: const Text('Calendar'),
-                      ),
-                    ],
-                  ),
+                  const Text('Select days of the month'),
                   const SizedBox(height: AppSpacing.space8),
                   SizedBox(
-                    height: 180,
-                    child: SingleChildScrollView(
-                      child: Wrap(
-                        spacing: AppSpacing.space8,
-                        runSpacing: AppSpacing.space8,
-                        children: List.generate(31, (index) {
-                          final value = index + 1;
-                          return FilterChip(
-                            label: Text('$value'),
-                            selected: selectedMonthDates.contains(value),
-                            onSelected: (_) => toggleMonthDate(value),
-                          );
-                        }),
+                    height: 200,
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 7,
+                        mainAxisSpacing: 6,
+                        crossAxisSpacing: 6,
                       ),
+                      itemCount: 31,
+                      itemBuilder: (context, index) {
+                        final value = index + 1;
+                        final selected = selectedMonthDates.contains(value);
+                        return GestureDetector(
+                          onTap: () => toggleMonthDate(value),
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '$value',
+                              style: TextStyle(
+                                color: selected
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurface,
+                                fontWeight: selected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

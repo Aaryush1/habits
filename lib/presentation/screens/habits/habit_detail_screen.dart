@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../domain/entities/habit.dart';
@@ -52,11 +53,12 @@ class HabitDetailScreen extends ConsumerWidget {
                       initialHabit: habitSnapshot,
                       defaultDisplayOrder: habitSnapshot.displayOrder,
                     );
-                    if (edited == null) {
+                    if (edited == null || !context.mounted) {
                       return;
                     }
                     await ref.read(habitsProvider.notifier).updateHabit(edited);
                     ref.invalidate(_habitProvider(habitId));
+                    ref.invalidate(habitStatsProvider(habitId));
                   },
           ),
         ],
@@ -80,10 +82,21 @@ class HabitDetailScreen extends ConsumerWidget {
               }
 
               return ListView(
+                padding: const EdgeInsets.only(bottom: 80),
                 children: [
                   Text(habit.name, style: AppTypography.displayMedium),
                   const SizedBox(height: AppSpacing.space8),
                   Text(_scheduleLabel(habit), style: AppTypography.bodyMedium),
+                  if (habit.identityStatement != null) ...[
+                    const SizedBox(height: AppSpacing.space12),
+                    Text(
+                      '"${habit.identityStatement}"',
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.accentGold,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.space20),
                   statsAsync.when(
                     loading: () =>
