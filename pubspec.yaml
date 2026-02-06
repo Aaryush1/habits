@@ -1,0 +1,50 @@
+name: atomic_habits
+description: "A habits tracking app based on Atomic Habits by James Clear"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Local Database (Hive - fast NoSQL)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Path for storing data
+  path_provider: ^2.1.5
+
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+
+  # Charts & Visualization
+  fl_chart: ^0.69.0
+
+  # UI & Design
+  google_fonts: ^6.2.1
+  phosphor_flutter: ^2.1.0
+  flutter_animate: ^4.5.2
+
+  # Utilities
+  uuid: ^4.5.1
+  intl: ^0.20.2
+  csv: ^6.0.0
+  share_plus: ^10.1.4
+  permission_handler: ^11.4.0
+  collection: ^1.19.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
