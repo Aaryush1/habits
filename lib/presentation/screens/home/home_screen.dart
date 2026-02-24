@@ -7,9 +7,12 @@ import '../../../core/theme/app_typography.dart';
 import '../../../domain/entities/completion.dart';
 import '../../../domain/entities/habit.dart';
 import '../../providers/completions_provider.dart';
+import '../../providers/current_streaks_provider.dart';
+import '../../providers/effort_provider.dart';
 import '../../providers/habits_provider.dart';
 import '../../providers/today_completions_provider.dart';
 import '../../providers/today_habits_provider.dart';
+import '../habits/habit_form_sheet.dart';
 import '../../widgets/common/empty_state.dart';
 import '../../widgets/common/section_header.dart';
 import '../../widgets/habit/habit_card.dart';
@@ -23,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final todayHabitsAsync = ref.watch(todayHabitsProvider);
     final todayCompletionsAsync = ref.watch(todayCompletionsProvider);
+    final streaksAsync = ref.watch(currentStreaksProvider);
     final now = DateTime.now();
     final todayKey = DateTime(now.year, now.month, now.day);
 
@@ -92,6 +96,7 @@ class HomeScreen extends ConsumerWidget {
                           _DailyProgressCard(
                             completed: completedCount,
                             total: habits.length,
+                            effortAsync: ref.watch(dailyEffortProvider),
                           ),
                           const SizedBox(height: AppSpacing.space16),
                           const SectionHeader(
@@ -119,6 +124,7 @@ class HomeScreen extends ConsumerWidget {
                                 ...categoryHabits.map((habit) {
                                   final isCompleted =
                                       completionByHabitId[habit.id] ?? false;
+                                  final streak = streaksAsync.valueOrNull?[habit.id] ?? 0;
                                   return Padding(
                                     padding: const EdgeInsets.only(
                                       bottom: AppSpacing.space12,
@@ -129,6 +135,7 @@ class HomeScreen extends ConsumerWidget {
                                       scheduleLabel: _scheduleLabel(habit),
                                       isCompleted: isCompleted,
                                       identityStatement: habit.identityStatement,
+                                      streakLength: streak,
                                       onTap: () {
                                         Navigator.of(context).push(
                                           MaterialPageRoute(
@@ -160,10 +167,14 @@ class HomeScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'home_fab',
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Create habits from the Habits tab')),
+        onPressed: () async {
+          final habitsCount = ref.read(habitsProvider).valueOrNull?.length ?? 0;
+          final newHabit = await showHabitFormSheet(
+            context: context,
+            defaultDisplayOrder: habitsCount,
           );
+          if (newHabit == null) return;
+          await ref.read(habitsProvider.notifier).createHabit(newHabit);
         },
         icon: const Icon(Icons.add),
         label: const Text('Habit'),
@@ -207,14 +218,20 @@ class _DailyProgressCard extends StatelessWidget {
   const _DailyProgressCard({
     required this.completed,
     required this.total,
+    required this.effortAsync,
   });
 
   final int completed;
   final int total;
+  final AsyncValue<DailyEffort> effortAsync;
 
   @override
   Widget build(BuildContext context) {
     final progress = total == 0 ? 0.0 : completed / total;
+    final effort = effortAsync.valueOrNull;
+    final showEffort =
+        effort != null && effort.scheduledMinutes > 0;
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.space16),
       decoration: BoxDecoration(
@@ -232,7 +249,16 @@ class _DailyProgressCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.space8),
-          Text('$completed of $total complete', style: AppTypography.headlineLarge),
+          Text('$completed of $total complete',
+              style: AppTypography.headlineLarge),
+          if (showEffort) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${effort.completedMinutes} of ${effort.scheduledMinutes} min invested',
+              style: AppTypography.bodySmall
+                  .copyWith(color: AppColors.twoMinuteBlue),
+            ),
+          ],
           const SizedBox(height: AppSpacing.space12),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -240,9 +266,23 @@ class _DailyProgressCard extends StatelessWidget {
               value: progress,
               minHeight: 8,
               backgroundColor: AppColors.backgroundQuaternary,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accentGold),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.accentGold),
             ),
           ),
+          if (showEffort) ...[
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: effort.rate,
+                minHeight: 4,
+                backgroundColor: AppColors.backgroundQuaternary,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.twoMinuteBlue),
+              ),
+            ),
+          ],
         ],
       ),
     );

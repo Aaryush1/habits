@@ -44,6 +44,10 @@ List<Habit> _buildHabits(DateTime today) {
       identityStatement: 'I am someone who starts each day with stillness',
       colorHex: 'E8A838', // Gold
       category: 'Mindfulness',
+      durationMinutes: 10,
+      implementationTime: '6:30 AM',
+      implementationLocation: 'Living room cushion',
+      twoMinuteVersion: 'Sit and take 5 deep breaths',
     ),
     // 2. Daily with strong start, fell off 3 weeks ago
     Habit(
@@ -56,6 +60,10 @@ List<Habit> _buildHabits(DateTime today) {
       identityStatement: 'I am a reader',
       colorHex: '6B9BD2', // Sky
       category: 'Learning',
+      durationMinutes: 30,
+      implementationTime: 'Before bed',
+      implementationLocation: 'Bedroom',
+      twoMinuteVersion: 'Read one page',
     ),
     // 3. Daily inconsistent — hovers around 55%
     Habit(
@@ -67,6 +75,7 @@ List<Habit> _buildHabits(DateTime today) {
       notificationsEnabled: false,
       colorHex: '5BC0BE', // Teal
       category: 'Health',
+      durationMinutes: 2,
     ),
     // 4. Weekly (Mon/Wed/Fri) — good consistency 80%+
     Habit(
@@ -80,6 +89,10 @@ List<Habit> _buildHabits(DateTime today) {
       identityStatement: 'I am an athlete',
       colorHex: '7DB87D', // Sage
       category: 'Fitness',
+      durationMinutes: 45,
+      implementationTime: '7:00 AM',
+      implementationLocation: 'Local gym',
+      twoMinuteVersion: 'Put on gym clothes and do 5 push-ups',
     ),
     // 5. Daily — brand new, only 10 days old, building momentum
     Habit(
@@ -92,6 +105,10 @@ List<Habit> _buildHabits(DateTime today) {
       identityStatement: 'I am someone who reflects on my day',
       colorHex: 'B088D4', // Lavender
       category: 'Mindfulness',
+      durationMinutes: 15,
+      implementationTime: '9:30 PM',
+      implementationLocation: 'Desk',
+      twoMinuteVersion: 'Write one sentence about today',
     ),
     // 6. Daily — stalled, was doing OK but hasn't been done in 12 days
     Habit(
@@ -103,6 +120,8 @@ List<Habit> _buildHabits(DateTime today) {
       notificationsEnabled: false,
       colorHex: 'D4726A', // Coral
       category: 'Creative',
+      durationMinutes: 20,
+      twoMinuteVersion: 'Pick up the guitar and play one chord',
     ),
     // 7. Monthly (1st and 15th) — consistent
     Habit(
@@ -115,6 +134,7 @@ List<Habit> _buildHabits(DateTime today) {
       notificationsEnabled: false,
       colorHex: 'E07B53', // Tangerine
       category: 'Finance',
+      durationMinutes: 30,
     ),
   ];
 }

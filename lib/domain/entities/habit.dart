@@ -22,6 +22,7 @@ class Habit {
     this.notes,
     this.notificationTimes,
     this.notificationTriggerHabitId,
+    this.durationMinutes,
   });
 
   final String id;
@@ -42,6 +43,7 @@ class Habit {
   final bool notificationsEnabled;
   final List<String>? notificationTimes;
   final String? notificationTriggerHabitId;
+  final int? durationMinutes;
 
   Habit copyWith({
     String? id,
@@ -62,6 +64,7 @@ class Habit {
     bool? notificationsEnabled,
     List<String>? notificationTimes,
     String? notificationTriggerHabitId,
+    int? durationMinutes,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -84,6 +87,7 @@ class Habit {
       notificationTimes: notificationTimes ?? this.notificationTimes,
       notificationTriggerHabitId:
           notificationTriggerHabitId ?? this.notificationTriggerHabitId,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
     );
   }
 
@@ -112,7 +116,8 @@ class Habit {
         other.displayOrder == displayOrder &&
         other.notificationsEnabled == notificationsEnabled &&
         _stringListEquality.equals(other.notificationTimes, notificationTimes) &&
-        other.notificationTriggerHabitId == notificationTriggerHabitId;
+        other.notificationTriggerHabitId == notificationTriggerHabitId &&
+        other.durationMinutes == durationMinutes;
   }
 
   @override
@@ -136,6 +141,7 @@ class Habit {
       notificationsEnabled,
       _stringListEquality.hash(notificationTimes),
       notificationTriggerHabitId,
+      durationMinutes,
     ]);
   }
 }

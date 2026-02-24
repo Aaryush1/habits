@@ -19,6 +19,7 @@ class HabitCard extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.showCheckbox = true,
+    this.streakLength = 0,
   });
 
   final String id;
@@ -31,6 +32,7 @@ class HabitCard extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
   final bool showCheckbox;
+  final int streakLength;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +74,7 @@ class HabitCard extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.space8),
-                const StreakDots(length: 0),
+                StreakDots(length: streakLength),
               ],
             ),
           ),

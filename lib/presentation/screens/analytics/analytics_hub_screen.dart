@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/completion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../providers/effort_provider.dart';
 import '../../providers/habit_strength_provider.dart';
 import '../../providers/heatmap_provider.dart';
 import '../../providers/rankings_provider.dart';
@@ -95,6 +96,7 @@ class _OverallScoreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strengthAsync = ref.watch(overallStrengthProvider);
+    final effortAsync = ref.watch(dailyEffortProvider);
 
     return _HubCard(
       onTap: () => Navigator.of(context).push(
@@ -103,51 +105,67 @@ class _OverallScoreCard extends StatelessWidget {
       child: strengthAsync.when(
         loading: () => const _CardShimmer(height: 80),
         error: (_, _) => const _CardError(),
-        data: (data) => Row(
-          children: [
-            SizedBox(
-              width: 64,
-              height: 64,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    value: data.overallScore.clamp(0.0, 1.0),
-                    strokeWidth: 6,
-                    backgroundColor: AppColors.borderSubtle,
-                    valueColor: AlwaysStoppedAnimation(
-                      _scoreColor(data.overallScore),
+        data: (data) {
+          final effort = effortAsync.valueOrNull;
+          final showEffort =
+              effort != null && effort.scheduledMinutes > 0;
+
+          return Row(
+            children: [
+              SizedBox(
+                width: 64,
+                height: 64,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: data.overallScore.clamp(0.0, 1.0),
+                      strokeWidth: 6,
+                      backgroundColor: AppColors.borderSubtle,
+                      valueColor: AlwaysStoppedAnimation(
+                        _scoreColor(data.overallScore),
+                      ),
                     ),
-                  ),
-                  Text(
-                    '${(data.overallScore * 100).round()}',
-                    style: AppTypography.headlineLarge,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.space16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Overall Score', style: AppTypography.headlineMedium),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Today: ${data.todayCompleted}/${data.todayTotal} done  |  Best streak: ${data.bestActiveStreak}d',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                    Text(
+                      '${(data.overallScore * 100).round()}',
+                      style: AppTypography.headlineLarge,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textTertiary,
-            ),
-          ],
-        ),
+              const SizedBox(width: AppSpacing.space16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Overall Score',
+                        style: AppTypography.headlineMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Today: ${data.todayCompleted}/${data.todayTotal} done  |  Best streak: ${data.bestActiveStreak}d',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    if (showEffort) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '${effort.completedMinutes}/${effort.scheduledMinutes} min invested',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.twoMinuteBlue,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textTertiary,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

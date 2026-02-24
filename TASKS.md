@@ -535,45 +535,111 @@ class CompletionModel extends HiveObject {
 
 ---
 
-### 6.4 Habit Detail Screen
-- [~] Create `presentation/screens/habits/habit_detail_screen.dart`
-- [ ] Implement streak hero section
-- [ ] Implement implementation intention display
+### 6.4 Habit Detail Screen Redesign (Design: `docs/plans/2026-02-24-detail-redesign.md`)
+
+**Previously completed (basic detail):**
+- [x] Create `presentation/screens/habits/habit_detail_screen.dart`
 - [x] Implement schedule display
-- [ ] Implement stack position display
-- [~] Implement stats grid
-- [~] Add edit button
-- [ ] Add link to full analytics
+- [x] Add edit button (AppBar action → form sheet)
+- [x] Basic stats grid (progress ring + 2 stat cards + completions)
+- [x] Basic 35-day heatmap (flat Wrap grid)
+
+**Redesign tasks:**
+
+#### 6.4a Color Header + Identity Card
+- [x] Add gradient color bar using habit's `colorHex` at top
+- [x] Category chip + schedule label + duration badge on same row
+- [x] Identity & Intentions card: identity statement, implementation time/location, 2-minute version
+- [x] Card uses `backgroundSecondary` with left accent border in habit color
+
+#### 6.4b Streak Hero Section
+- [x] Large streak number using `dataLarge` (JetBrains Mono)
+- [x] Fire icon scaled by streak length (small <7d, medium 7-29d, large 30d+)
+- [x] Longest streak with trophy icon beside current streak
+
+#### 6.4c Enhanced Stats Grid (2x2)
+- [x] Completion Rate (progress ring, existing)
+- [x] Habit Strength (progress ring, from `habitStrengthProvider`)
+- [x] Total Completions / Scheduled Days
+- [x] Effort Invested (total minutes, if `durationMinutes` set)
+
+#### 6.4d GitHub-Style Heatmap
+- [x] Replace flat Wrap heatmap with GitHub-style grid (reuse pattern from `full_heatmap_screen`)
+- [x] 12-week view filtered to this specific habit
+- [x] Use habit's color for the gradient instead of default green
+
+#### 6.4e Quick Actions Row
+- [x] "View in Rankings" → navigates to rankings screen
+- [x] "Full Heatmap" → navigates to full heatmap screen
+- [x] "Edit" → opens form sheet (inline action + AppBar)
 
 #### Testing Phase 6.4
-- [ ] All habit data displays correctly
-- [ ] Streak hero animates
-- [ ] Edit navigates to form
-- [ ] Stats are accurate
+- [ ] All habit data displays correctly (name, category, schedule, duration, identity, intentions)
+- [ ] Streak hero shows correct current streak with scaled fire icon
+- [ ] Habit strength ring shows correct per-habit score
+- [ ] Effort stats show total minutes when duration is set
+- [ ] Heatmap shows GitHub-style grid for 12 weeks, filtered to habit
+- [ ] Quick action links navigate to correct screens
+- [ ] Edit opens pre-filled form sheet
+- [ ] Screen renders gracefully when optional fields (identity, intentions, duration) are null
 
 ---
 
-### 6.5 Create/Edit Habit Screen
-- [~] Create `presentation/screens/habits/habit_form_screen.dart`
+### 6.5 Create/Edit Habit Form (Design: `docs/plans/2026-02-24-detail-redesign.md`)
+
+**Previously completed:**
+- [x] Create `presentation/screens/habits/habit_form_sheet.dart` (bottom sheet)
 - [x] Implement name input
 - [x] Implement schedule type picker
-- [~] Implement day/date selectors
+- [x] Implement day/date selectors (weekly multi-day, monthly date grid)
 - [x] Implement identity statement input
-- [ ] Implement implementation intention inputs (time, location)
-- [ ] Implement 2-minute version input
-- [ ] Implement color picker
-- [x] Implement category selector
-- [ ] Implement notification settings
-- [ ] Implement stack linking
+- [x] Implement category input
 - [x] Implement save/cancel actions
-- [~] Implement validation
+
+**New fields:**
+
+#### 6.5a Color Picker
+- [x] Horizontal row of 8 color circles from `AppColors.habitPalette`
+- [x] Tap to select, checkmark overlay on selected
+- [x] Default: gold (first in palette)
+- [x] Wire to `colorHex` field on save
+
+#### 6.5b Duration Minutes Input
+- [x] Number input field with "min" suffix label
+- [x] Preset chips row: 5, 10, 15, 20, 30, 45, 60
+- [x] Tap preset to fill, or type custom value
+- [x] Optional — can leave empty
+- [x] Wire to `durationMinutes` field on save
+
+#### 6.5c Implementation Intention Inputs
+- [x] "What time?" text field with hint "e.g., 7:00 AM, After breakfast"
+- [x] "Where?" text field with hint "e.g., Living room, Office desk"
+- [x] Wire to `implementationTime` and `implementationLocation` on save
+
+#### 6.5d 2-Minute Version Input
+- [x] Text field with hint "e.g., Put on running shoes"
+- [x] Helper text: "What's the smallest version of this habit?"
+- [x] Wire to `twoMinuteVersion` on save
+
+#### 6.5e Validation
+- [x] Name: required, show error text if empty on save attempt
+- [x] Weekly: at least 1 day selected, show error if none
+- [x] Monthly: at least 1 date selected, show error if none
+- [x] Duration: positive integer if provided, reject 0 or negative
+
+#### 6.5f Reorganized Form Layout
+- [x] Order: Name → Category → Color → Schedule → Duration → Identity → Time → Location → 2-min → Save/Cancel
+- [x] DraggableScrollableSheet for tall form content
 
 #### Testing Phase 6.5
-- [ ] All fields save correctly
-- [ ] Validation prevents invalid data
-- [ ] Edit mode pre-fills data
-- [ ] Cancel discards changes
-- [ ] Keyboard handling is smooth
+- [ ] Color picker shows 8 colors, selection persists on save and edit reload
+- [ ] Duration chips fill the input, custom values save correctly
+- [ ] Implementation time/location save and pre-fill on edit
+- [ ] 2-minute version saves and pre-fills on edit
+- [ ] Validation shows inline errors for empty name, no days selected
+- [ ] All new fields survive round-trip (create → save → edit → verify pre-filled)
+- [ ] Cancel discards all changes including new fields
+- [ ] Keyboard handling: fields scroll into view, return key advances to next field
 
 ---
 
@@ -680,9 +746,63 @@ class CompletionModel extends HiveObject {
 ---
 
 ### 6.7 Settings Screen
-- [ ] Implement app info section
+- [x] Implement app info section (version, built-with)
+- [x] Implement developer tools (Load Sample Data, Clear All Data)
 - [ ] Implement archived habits access
-- [ ] Implement about/credits
+
+---
+
+### 6.8 Duration/Effort Data Layer (Design: `docs/plans/2026-02-24-detail-redesign.md`)
+
+#### 6.8a Entity + Model Changes
+- [x] Add `durationMinutes` (int?) to `domain/entities/habit.dart` + `copyWith`
+- [x] Add field 18 `int? durationMinutes` to `data/models/habit_model.dart`
+- [x] Update `HabitModelAdapter`: bump field count 18→19, add read/write for field 18
+- [x] Update `toEntity()` / `fromEntity()` converters
+- [x] Backward compat: existing habits read field 18 as null (Hive handles missing fields)
+
+#### 6.8b Effort Analytics Provider
+- [x] Create `presentation/providers/effort_provider.dart`
+- [x] Daily effort: `sum(completed durations) / sum(scheduled durations)` for today
+- [x] Weighted overall score: `sum(strength[i] * duration[i]) / sum(duration[i])`
+- [x] Exclude habits with null `durationMinutes` from effort calculations
+
+#### 6.8c Integrate Effort into Existing Screens
+- [x] Home screen daily progress card: "X/Y min invested" second line + blue progress bar
+- [x] Analytics hub Overall Score card: "X/Y min invested" line
+- [x] Habit detail screen: effort stat tile (total minutes invested)
+- [ ] Weekly trends drill-down: effort bar chart alongside completion bar chart
+- [ ] Habit rankings: add "effort" sort column (total minutes completed)
+
+#### Testing Phase 6.8
+- [ ] Adding durationMinutes to new habit persists correctly
+- [ ] Existing habits without duration load without errors (null default)
+- [ ] Effort rate calculation matches manual verification
+- [ ] Weighted overall score excludes null-duration habits
+- [ ] Home screen shows effort line when at least 1 habit has duration set
+- [ ] Home screen hides effort line when no habits have duration
+- [ ] Rankings sort by effort correctly
+
+---
+
+### 6.9 Widget Fixes (Design: `docs/plans/2026-02-24-detail-redesign.md`)
+
+#### 6.9a HabitCard Streak Dots
+- [x] Create batch `currentStreaksProvider` returning map of habitId to current streak
+- [x] Add `streakLength` parameter to `HabitCard`
+- [x] Pass actual streak length from Home screen and Habits List screen
+- [x] `StreakDots` renders filled dots based on real data
+
+#### 6.9b Home FAB Fix
+- [x] Replace snackbar with actual `showHabitFormSheet()` call
+- [x] On save, call `habitsProvider.notifier.createHabit()`
+- [x] Removed "Create habits from the Habits tab" snackbar
+
+#### Testing Phase 6.9
+- [ ] HabitCard streak dots show correct filled count matching current streak
+- [ ] Streak dots update after completing a habit today
+- [ ] Home FAB opens form sheet, saving creates a new habit visible in list
+- [ ] New habit from Home FAB appears on Today screen if scheduled today
 
 ---
 
@@ -839,11 +959,13 @@ The following features are preserved for future development. They are not blocke
 
 ## Current Status
 
-**Current Phase:** Phase 6 - Screens (core screens functional; deep analytics redesign next)
-**Current Task:** Deep analytics hub + drill-down design approved. Providers (3.4) then screens (6.6a-g) next.
+**Current Phase:** Phase 6 - Screens (detail redesign + form + duration + widget fixes COMPLETE)
+**Current Task:** Remaining: 6.8c partial (effort in weekly trends + rankings drill-downs)
 **Last Updated:** 2026-02-24
 **Blockers:** None
-**Design Doc:** `docs/plans/2026-02-24-deep-analytics-design.md`
+**Design Docs:**
+- `docs/plans/2026-02-24-deep-analytics-design.md` (complete)
+- `docs/plans/2026-02-24-detail-redesign.md` (approved, ready to implement)
 
 ---
 
@@ -865,6 +987,7 @@ The following features are preserved for future development. They are not blocke
 - **PROGRESS 2026-02-05 (Claude):** Phase C - Redesigned completion animation (bounce-scale + color fill), overhauled analytics screen (summary cards, today highlight, color indicators), consolidated to 4-tab nav (removed empty Analytics placeholder, renamed Scorecard to Analytics).
 - **DECISION 2026-02-05:** Deferred stacks, notifications, CSV export, drill-down analytics, accessibility, and performance optimization to v2.
 - **DECISION 2026-02-24:** Approved deep analytics redesign — hub + drill-down replacing the shallow scorecard-only Analytics tab. Design doc: `docs/plans/2026-02-24-deep-analytics-design.md`. Inspired by Loop (habit strength algorithm), Habitify (multi-timeframe trends), and Pattrn (score-based tracking). Six hub cards drill into: Score History, Weekly Trends, Streaks, Full Heatmap, Habit Rankings, and existing Scorecard Grid.
+- **DECISION 2026-02-24:** Approved detail screen redesign + form improvements + duration/effort tracking. Data layer first (6.8), then form (6.5), then detail screen (6.4), then widget fixes (6.9). Duration is a new `durationMinutes` field on Habit entity with parallel effort analytics (never replaces completion rate, runs alongside). Design doc: `docs/plans/2026-02-24-detail-redesign.md`.
 - Riverpod chosen for testability and clean state management
 - Clean Architecture for maintainability
 - Dark mode only for v1 (light mode can be added later)

@@ -5,6 +5,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/color_utils.dart';
 import '../../../domain/entities/habit.dart';
+import '../../providers/current_streaks_provider.dart';
 import '../../providers/habits_provider.dart';
 import '../../widgets/common/empty_state.dart';
 import '../../widgets/common/section_header.dart';
@@ -250,6 +251,7 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
         isCompleted: false,
         identityStatement: habit.identityStatement,
         color: parseHexColor(habit.colorHex),
+        streakLength: ref.watch(currentStreaksProvider).valueOrNull?[habit.id] ?? 0,
         onToggle: (_) {},
         showCheckbox: false,
         onTap: () {
