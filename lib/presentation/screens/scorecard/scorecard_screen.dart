@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/color_utils.dart';
+import '../../../core/utils/schedule_utils.dart';
 import '../../../domain/entities/completion.dart';
 import '../../../domain/entities/habit.dart';
 import '../../providers/completions_provider.dart';
@@ -225,7 +227,7 @@ class _ScorecardScreenState extends ConsumerState<ScorecardScreen> {
     var completed = 0;
     for (final habit in habits) {
       for (final day in days) {
-        if (!_isHabitScheduledOn(habit, day)) continue;
+        if (!isHabitScheduledOn(habit, day)) continue;
         total++;
         final completion =
             completionMap['${habit.id}_${day.toIso8601String()}'];
@@ -370,7 +372,7 @@ class _HabitGridRow extends StatelessWidget {
                   width: 3,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: _parseColor(habit.colorHex) ?? AppColors.accentGold,
+                    color: parseHexColor(habit.colorHex) ?? AppColors.accentGold,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -388,7 +390,7 @@ class _HabitGridRow extends StatelessWidget {
           ...days.map((day) {
             final key = '${habit.id}_${day.toIso8601String()}';
             final completion = completionMap[key];
-            final scheduled = _isHabitScheduledOn(habit, day);
+            final scheduled = isHabitScheduledOn(habit, day);
             final isCompleted = completion != null &&
                 completion.completionType != HabitCompletionType.skipped;
             final isSkipped =
@@ -431,19 +433,6 @@ class _HabitGridRow extends StatelessWidget {
     );
   }
 
-  Color? _parseColor(String? hex) {
-    if (hex == null || hex.isEmpty) return null;
-    try {
-      final normalized = hex.replaceAll('#', '');
-      final value = int.parse(
-        normalized.length == 6 ? 'FF$normalized' : normalized,
-        radix: 16,
-      );
-      return Color(value);
-    } catch (_) {
-      return null;
-    }
-  }
 }
 
 Widget _buildLegend() {
@@ -480,15 +469,3 @@ Widget _buildLegend() {
   );
 }
 
-bool _isHabitScheduledOn(Habit habit, DateTime date) {
-  switch (habit.scheduleType) {
-    case HabitScheduleType.daily:
-      return true;
-    case HabitScheduleType.weekly:
-      final days = habit.scheduleDays ?? const <int>[];
-      return days.contains(date.weekday - 1);
-    case HabitScheduleType.monthly:
-      final dates = habit.scheduleDates ?? const <int>[];
-      return dates.contains(date.day);
-  }
-}

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/color_utils.dart';
 import '../../../domain/entities/habit.dart';
 import '../../providers/habits_provider.dart';
 import '../../widgets/common/empty_state.dart';
@@ -248,7 +249,7 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
         scheduleLabel: _scheduleLabel(habit),
         isCompleted: false,
         identityStatement: habit.identityStatement,
-        color: _parseColor(habit.colorHex),
+        color: parseHexColor(habit.colorHex),
         onToggle: (_) {},
         showCheckbox: false,
         onTap: () {
@@ -338,19 +339,4 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
     }
   }
 
-  Color? _parseColor(String? hex) {
-    if (hex == null || hex.isEmpty) {
-      return null;
-    }
-    try {
-      final normalized = hex.replaceAll('#', '');
-      final value = int.parse(
-        normalized.length == 6 ? 'FF$normalized' : normalized,
-        radix: 16,
-      );
-      return Color(value);
-    } catch (_) {
-      return null;
-    }
-  }
 }

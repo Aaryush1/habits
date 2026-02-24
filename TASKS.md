@@ -313,18 +313,46 @@ class CompletionModel extends HiveObject {
 
 ---
 
-### 3.4 Use Cases - Statistics
-- [ ] Create `domain/usecases/stats/get_habit_stats.dart`
-- [ ] Create `domain/usecases/stats/get_streak.dart`
-- [ ] Create `domain/usecases/stats/get_completion_rate.dart`
-- [ ] Create `domain/usecases/stats/get_best_days.dart`
-- [ ] Create `domain/usecases/stats/get_heatmap_data.dart`
+### 3.4 Deep Analytics Providers & Computation (Design: `docs/plans/2026-02-24-deep-analytics-design.md`)
+
+#### 3.4a Habit Strength Score Provider
+- [x] Create `presentation/providers/habit_strength_provider.dart`
+- [x] Implement decaying score algorithm: `score = score * (1 - decay) + (completed ? decay : 0)` per habit
+- [x] Compute overall score as average of all active habit scores
+- [x] Cache with revision-aware invalidation (same pattern as `habitStatsProvider`)
+- [x] Support historical score computation for chart data (last 30/90/365 days)
+
+#### 3.4b Weekly Trends Provider
+- [x] Create `presentation/providers/weekly_trends_provider.dart`
+- [x] Compute completion rate per week for last N weeks
+- [x] Compute day-of-week aggregation (average completion rate per weekday across all time)
+- [x] Compute week-over-week delta (this week vs last week %)
+
+#### 3.4c Streak Analytics Provider
+- [x] Create `presentation/providers/streak_analytics_provider.dart`
+- [x] Compute all active streaks sorted by length
+- [x] Compute personal records (longest streak per habit with date ranges)
+- [x] Compute streak timeline data (start/end dates for all streak periods)
+- [x] Identify "at risk" habits (active streak but not completed today)
+
+#### 3.4d Rankings Provider
+- [x] Create `presentation/providers/rankings_provider.dart`
+- [x] Compute sortable habit list with: completion rate, current streak, total completions, habit strength
+- [x] Assign status badges: On Fire (>90%), Steady (70-90%), Needs Attention (50-70%), Stalled (<50%)
+
+#### 3.4e Extract Shared Utilities
+- [x] Extract `_isHabitScheduledOn()` to `core/utils/schedule_utils.dart` (currently duplicated 3x)
+- [x] Extract `_parseColor()` to `core/utils/color_utils.dart` (currently duplicated 2x)
 
 #### Testing Phase 3.4
-- [ ] Streak calculation handles gaps correctly
-- [ ] Completion rate math is accurate
-- [ ] Best days analysis is correct
-- [ ] Heatmap data aggregates properly
+- [ ] Habit strength score decays correctly on misses and recovers on completions
+- [ ] Habit strength score handles edge cases (new habit with no data, archived habits)
+- [ ] Weekly trends match manual calculation for a known dataset
+- [ ] Day-of-week aggregation correctly groups across months/years
+- [ ] Streak timeline identifies all historical streak periods
+- [ ] "At risk" list correctly identifies habits not yet done today
+- [ ] Rankings sort correctly by each metric
+- [ ] Status badges assign at correct thresholds
 
 ---
 
@@ -576,19 +604,78 @@ class CompletionModel extends HiveObject {
 
 ---
 
-### 6.6 Analytics Screen (formerly Scorecard)
+### 6.6 Analytics — Deep Hub + Drill-Down (Design: `docs/plans/2026-02-24-deep-analytics-design.md`)
+
+**Previously completed (scorecard grid):**
 - [x] Rename scorecard to analytics throughout codebase
 - [x] Redesign as read-only visual scorecard (no accidental edits)
 - [x] Fill vertical space, prettier cells, better typography
 - [x] Add summary stat cards (completion rate, count, habit count)
 - [x] Today highlight in header, habit color indicators, check marks in cells
-- [ ] Add heatmap or trend chart below grid (future)
+
+#### 6.6a Analytics Hub Screen
+- [x] Replace current Analytics tab content with hub dashboard
+- [x] Overall Score card — habit strength %, today's completion, best active streak
+- [x] Weekly Report card — this week's rate vs last week, 7-day mini bar chart
+- [x] Streaks card — top 3 active streaks with flame indicators
+- [x] Heatmap card — 12-week GitHub-style contribution grid preview
+- [x] Habit Rankings card — top/bottom habits by completion rate
+- [x] Scorecard Grid card — miniature 7-day preview linking to existing full grid
+- [x] All cards tappable, navigating to their drill-down screens
+
+#### 6.6b Score History Screen (drill-down)
+- [x] Large score display with progress ring
+- [x] Line chart: score over last 30/90/365 days (segmented control toggle)
+- [x] Per-habit score breakdown: ranked list with mini progress bars
+- [x] Color coding: green (>75%), gold (50-75%), coral (<50%)
+
+#### 6.6c Weekly Trends Screen (drill-down)
+- [x] Weekly comparison bar chart: last 4 weeks side by side
+- [x] Day-of-week heatmap: 7 columns (Mon-Sun), average completion rate per weekday
+- [x] This week detail: expandable per-day breakdown with completions/misses per habit
+- [x] Week-over-week delta: "+12% vs last week" with directional arrow
+
+#### 6.6d Streaks Screen (drill-down)
+- [x] Active streaks: sorted by length, flame icon scaled by streak size
+- [x] Personal records: longest streak per habit with date range
+- [x] Streak timeline: horizontal Gantt-style chart of streak periods
+- [x] At risk: habits with active streaks not yet completed today
+
+#### 6.6e Full Heatmap Screen (drill-down)
+- [x] GitHub-style grid: 7 rows (Mon-Sun) x N columns (weeks)
+- [x] Default 12-week view, expandable to full year
+- [x] Month labels along top
+- [x] Filter by habit dropdown (all habits vs individual)
+- [x] 5-level intensity legend
+- [x] Auto-generated insight text: "Most active in [month]" / "Best day is [weekday]"
+
+#### 6.6f Habit Rankings Screen (drill-down)
+- [x] Sortable list: each habit row with completion rate, current streak, total completions, habit strength
+- [x] Tap column header to sort by that metric
+- [x] Tap habit row to open habit detail screen
+- [x] Status badges: On Fire (>90%), Steady (70-90%), Needs Attention (50-70%), Stalled (<50%)
+
+#### 6.6g Scorecard Grid (existing, preserved)
+- [x] Full 35-day scrollable grid (already implemented)
+- [x] Accessible as drill-down from hub's Scorecard card
 
 #### Testing Phase 6.6
-- [x] Grid displays correct completion states
-- [x] No accidental edits possible
-- [x] Fills screen beautifully
-- [ ] Stats are accurate (needs manual verification)
+- [x] Scorecard grid displays correct completion states
+- [x] No accidental edits possible in scorecard
+- [x] Scorecard fills screen beautifully
+- [ ] Hub loads without errors and shows all 6 cards
+- [ ] Each hub card navigates to correct drill-down screen
+- [ ] Overall score matches manual calculation
+- [ ] Score history chart renders correctly for 30/90/365 day ranges
+- [ ] Weekly trends show correct completion rates per week
+- [ ] Day-of-week heatmap accurately reflects historical patterns
+- [ ] Streaks screen shows all active streaks sorted correctly
+- [ ] "At risk" list correctly identifies habits due today
+- [ ] Full heatmap renders correct grid for 12-week and year views
+- [ ] Heatmap filter by habit works correctly
+- [ ] Rankings sort by each column correctly
+- [ ] Status badges assign at correct thresholds
+- [ ] All drill-down screens use consistent dark theme styling
 
 ---
 
@@ -752,10 +839,11 @@ The following features are preserved for future development. They are not blocke
 
 ## Current Status
 
-**Current Phase:** Phase 6 - Screens (core screens functional, polish in progress)
-**Current Task:** All critical bugs resolved. Scorecard renamed to Analytics. 4-tab nav. Ready for manual QA.
-**Last Updated:** 2026-02-05
+**Current Phase:** Phase 6 - Screens (core screens functional; deep analytics redesign next)
+**Current Task:** Deep analytics hub + drill-down design approved. Providers (3.4) then screens (6.6a-g) next.
+**Last Updated:** 2026-02-24
 **Blockers:** None
+**Design Doc:** `docs/plans/2026-02-24-deep-analytics-design.md`
 
 ---
 
@@ -776,6 +864,7 @@ The following features are preserved for future development. They are not blocke
 - **PROGRESS 2026-02-05 (Claude):** Phase B - Fixed edit from detail screen, added bottom padding for chart overlap, replaced month picker with calendar grid, made analytics grid read-only.
 - **PROGRESS 2026-02-05 (Claude):** Phase C - Redesigned completion animation (bounce-scale + color fill), overhauled analytics screen (summary cards, today highlight, color indicators), consolidated to 4-tab nav (removed empty Analytics placeholder, renamed Scorecard to Analytics).
 - **DECISION 2026-02-05:** Deferred stacks, notifications, CSV export, drill-down analytics, accessibility, and performance optimization to v2.
+- **DECISION 2026-02-24:** Approved deep analytics redesign — hub + drill-down replacing the shallow scorecard-only Analytics tab. Design doc: `docs/plans/2026-02-24-deep-analytics-design.md`. Inspired by Loop (habit strength algorithm), Habitify (multi-timeframe trends), and Pattrn (score-based tracking). Six hub cards drill into: Score History, Weekly Trends, Streaks, Full Heatmap, Habit Rankings, and existing Scorecard Grid.
 - Riverpod chosen for testability and clean state management
 - Clean Architecture for maintainability
 - Dark mode only for v1 (light mode can be added later)

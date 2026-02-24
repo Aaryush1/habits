@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
 import 'router.dart';
 import '../presentation/screens/home/home_screen.dart';
-import '../presentation/screens/scorecard/scorecard_screen.dart';
+import '../presentation/screens/analytics/analytics_hub_screen.dart';
 import '../presentation/screens/habits/habits_list_screen.dart';
 import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/widgets/navigation/bottom_nav_bar.dart';
@@ -38,7 +38,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   final List<Widget> _screens = const [
     HomeScreen(),
     HabitsListScreen(),
-    ScorecardScreen(),
+    AnalyticsHubScreen(),
     SettingsScreen(),
   ];
 

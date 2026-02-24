@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/utils/schedule_utils.dart';
 import '../../domain/entities/completion.dart';
-import '../../domain/entities/habit.dart';
 import 'completions_provider.dart';
 import 'repository_providers.dart';
 
@@ -41,7 +41,7 @@ final analyticsProvider = FutureProvider<AnalyticsSummary>((ref) async {
       .toSet();
 
   final scheduledToday =
-      habits.where((habit) => _isHabitScheduledOn(habit, today)).length;
+      habits.where((habit) => isHabitScheduledOn(habit, today)).length;
   final completedToday = habits
       .where((habit) => successfulToday.contains(habit.id))
       .length;
@@ -69,7 +69,7 @@ final analyticsProvider = FutureProvider<AnalyticsSummary>((ref) async {
     final day = weekStart.add(Duration(days: i));
     final dayCompletions = successfulByDay[day] ?? <String>{};
     for (final habit in habits) {
-      if (_isHabitScheduledOn(habit, day)) {
+      if (isHabitScheduledOn(habit, day)) {
         weekScheduled++;
         if (dayCompletions.contains(habit.id)) {
           weekCompleted++;
@@ -100,16 +100,3 @@ final analyticsProvider = FutureProvider<AnalyticsSummary>((ref) async {
 });
 
 final Map<String, AnalyticsSummary> _analyticsCache = {};
-
-bool _isHabitScheduledOn(Habit habit, DateTime date) {
-  switch (habit.scheduleType) {
-    case HabitScheduleType.daily:
-      return true;
-    case HabitScheduleType.weekly:
-      final days = habit.scheduleDays ?? const <int>[];
-      return days.contains(date.weekday - 1);
-    case HabitScheduleType.monthly:
-      final dates = habit.scheduleDates ?? const <int>[];
-      return dates.contains(date.day);
-  }
-}

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../presentation/screens/analytics/analytics_dashboard_screen.dart';
+import '../presentation/screens/analytics/analytics_hub_screen.dart';
 import '../presentation/screens/habits/habits_list_screen.dart';
 import '../presentation/screens/home/home_screen.dart';
 import '../presentation/screens/scorecard/scorecard_screen.dart';
@@ -24,7 +24,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case AppRoutes.habits:
       return MaterialPageRoute(builder: (_) => const HabitsListScreen());
     case AppRoutes.analytics:
-      return MaterialPageRoute(builder: (_) => const AnalyticsDashboardScreen());
+      return MaterialPageRoute(builder: (_) => const AnalyticsHubScreen());
     case AppRoutes.settings:
       return MaterialPageRoute(builder: (_) => const SettingsScreen());
     default:
