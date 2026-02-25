@@ -5,7 +5,7 @@ class UnlinkHabits {
 
   final StackRepository _stackRepository;
 
-  Future<void> call(String previousHabitId, String nextHabitId) {
-    return _stackRepository.unlinkHabits(previousHabitId, nextHabitId);
+  Future<void> call(String stackId) {
+    return _stackRepository.deleteStack(stackId);
   }
 }

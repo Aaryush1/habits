@@ -1,10 +1,12 @@
-import '../entities/habit_stack.dart';
+import '../entities/stack.dart';
 
 abstract class StackRepository {
-  Future<void> linkHabits(HabitStack stackLink);
-  Future<void> unlinkHabits(String previousHabitId, String nextHabitId);
-  Future<List<HabitStack>> getAllLinks();
-  Future<List<HabitStack>> getNextLinks(String habitId);
-  Future<HabitStack?> getPreviousLink(String habitId);
-  Future<List<HabitStack>> getChainForHabit(String habitId);
+  Future<List<HabitStack>> getAllStacks();
+  Future<HabitStack?> getStack(String id);
+  Future<void> createStack(HabitStack stack);
+  Future<void> updateStack(HabitStack stack);
+  Future<void> deleteStack(String id);
+
+  /// Returns all stacks that contain the given habit ID.
+  Future<List<HabitStack>> getStacksForHabit(String habitId);
 }

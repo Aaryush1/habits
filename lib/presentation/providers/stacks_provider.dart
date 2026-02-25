@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/habit_stack.dart';
+import '../../domain/entities/stack.dart';
 import '../../domain/repositories/stack_repository.dart';
 import 'repository_providers.dart';
 
@@ -11,21 +11,34 @@ class StacksNotifier extends AsyncNotifier<List<HabitStack>> {
 
   @override
   Future<List<HabitStack>> build() {
-    return _repository.getAllLinks();
+    return _repository.getAllStacks();
   }
 
   Future<void> reload() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _repository.getAllLinks());
+    state = await AsyncValue.guard(() => _repository.getAllStacks());
   }
 
-  Future<void> link(HabitStack link) async {
-    await _repository.linkHabits(link);
+  Future<void> createStack(HabitStack stack) async {
+    await _repository.createStack(stack);
     await reload();
   }
 
-  Future<void> unlink(String previousHabitId, String nextHabitId) async {
-    await _repository.unlinkHabits(previousHabitId, nextHabitId);
+  Future<void> updateStack(HabitStack stack) async {
+    await _repository.updateStack(stack);
+    await reload();
+  }
+
+  Future<void> deleteStack(String id) async {
+    await _repository.deleteStack(id);
     await reload();
   }
 }
+
+/// Returns all stacks containing the given habit ID.
+final stacksForHabitProvider =
+    FutureProvider.family<List<HabitStack>, String>((ref, habitId) async {
+  ref.watch(stacksProvider);
+  final repository = ref.watch(stackRepositoryProvider);
+  return repository.getStacksForHabit(habitId);
+});

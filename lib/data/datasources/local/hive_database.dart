@@ -9,6 +9,7 @@ class HiveDatabase {
   static const String completionsBoxName = 'completions_box';
   static const String habitStacksBoxName = 'habit_stacks_box';
   static const String categoriesBoxName = 'categories_box';
+  static const String settingsBoxName = 'settings_box';
 
   static bool _isInitialized = false;
 
@@ -56,6 +57,8 @@ class HiveDatabase {
         Hive.openBox<HabitStackModel>(habitStacksBoxName),
       if (!Hive.isBoxOpen(categoriesBoxName))
         Hive.openBox<CategoryModel>(categoriesBoxName),
+      if (!Hive.isBoxOpen(settingsBoxName))
+        Hive.openBox<dynamic>(settingsBoxName),
     ]);
   }
 
@@ -66,4 +69,5 @@ class HiveDatabase {
       Hive.box<HabitStackModel>(habitStacksBoxName);
   static Box<CategoryModel> get categoriesBox =>
       Hive.box<CategoryModel>(categoriesBoxName);
+  static Box<dynamic> get settingsBox => Hive.box<dynamic>(settingsBoxName);
 }

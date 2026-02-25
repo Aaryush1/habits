@@ -1,4 +1,4 @@
-import '../../entities/habit_stack.dart';
+import '../../entities/stack.dart';
 import '../../repositories/stack_repository.dart';
 
 class GetNextInStack {
@@ -7,6 +7,6 @@ class GetNextInStack {
   final StackRepository _stackRepository;
 
   Future<List<HabitStack>> call(String habitId) {
-    return _stackRepository.getNextLinks(habitId);
+    return _stackRepository.getStacksForHabit(habitId);
   }
 }

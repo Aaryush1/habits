@@ -1,4 +1,4 @@
-import '../../entities/habit_stack.dart';
+import '../../entities/stack.dart';
 import '../../repositories/stack_repository.dart';
 
 class LinkHabits {
@@ -6,7 +6,7 @@ class LinkHabits {
 
   final StackRepository _stackRepository;
 
-  Future<void> call(HabitStack stackLink) {
-    return _stackRepository.linkHabits(stackLink);
+  Future<void> call(HabitStack stack) {
+    return _stackRepository.createStack(stack);
   }
 }

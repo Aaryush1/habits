@@ -23,6 +23,7 @@ class Habit {
     this.notificationTimes,
     this.notificationTriggerHabitId,
     this.durationMinutes,
+    this.reminderTime,
   });
 
   final String id;
@@ -44,6 +45,8 @@ class Habit {
   final List<String>? notificationTimes;
   final String? notificationTriggerHabitId;
   final int? durationMinutes;
+  /// Minutes since midnight for the daily reminder time, or null if no reminder.
+  final int? reminderTime;
 
   Habit copyWith({
     String? id,
@@ -65,6 +68,7 @@ class Habit {
     List<String>? notificationTimes,
     String? notificationTriggerHabitId,
     int? durationMinutes,
+    int? reminderTime,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -88,6 +92,7 @@ class Habit {
       notificationTriggerHabitId:
           notificationTriggerHabitId ?? this.notificationTriggerHabitId,
       durationMinutes: durationMinutes ?? this.durationMinutes,
+      reminderTime: reminderTime ?? this.reminderTime,
     );
   }
 
@@ -117,7 +122,8 @@ class Habit {
         other.notificationsEnabled == notificationsEnabled &&
         _stringListEquality.equals(other.notificationTimes, notificationTimes) &&
         other.notificationTriggerHabitId == notificationTriggerHabitId &&
-        other.durationMinutes == durationMinutes;
+        other.durationMinutes == durationMinutes &&
+        other.reminderTime == reminderTime;
   }
 
   @override
@@ -142,6 +148,7 @@ class Habit {
       _stringListEquality.hash(notificationTimes),
       notificationTriggerHabitId,
       durationMinutes,
+      reminderTime,
     ]);
   }
 }

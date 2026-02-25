@@ -1,34 +1,46 @@
 import 'package:hive/hive.dart';
-import '../../domain/entities/habit_stack.dart';
+import '../../domain/entities/stack.dart';
 
 class HabitStackModel {
   HabitStackModel({
     required this.id,
-    required this.previousHabitId,
-    required this.nextHabitId,
+    required this.name,
+    required this.habitIds,
     required this.createdAt,
+    this.description,
+    this.iconEmoji,
+    this.chainNotificationsEnabled = false,
   });
 
   String id;
-  String previousHabitId;
-  String nextHabitId;
+  String name;
+  List<String> habitIds;
   DateTime createdAt;
+  String? description;
+  String? iconEmoji;
+  bool chainNotificationsEnabled;
 
   HabitStack toEntity() {
     return HabitStack(
       id: id,
-      previousHabitId: previousHabitId,
-      nextHabitId: nextHabitId,
+      name: name,
+      habitIds: habitIds,
       createdAt: createdAt,
+      description: description,
+      iconEmoji: iconEmoji,
+      chainNotificationsEnabled: chainNotificationsEnabled,
     );
   }
 
   static HabitStackModel fromEntity(HabitStack entity) {
     return HabitStackModel(
       id: entity.id,
-      previousHabitId: entity.previousHabitId,
-      nextHabitId: entity.nextHabitId,
+      name: entity.name,
+      habitIds: entity.habitIds,
       createdAt: entity.createdAt,
+      description: entity.description,
+      iconEmoji: entity.iconEmoji,
+      chainNotificationsEnabled: entity.chainNotificationsEnabled,
     );
   }
 }
@@ -47,23 +59,32 @@ class HabitStackModelAdapter extends TypeAdapter<HabitStackModel> {
 
     return HabitStackModel(
       id: fields[0] as String,
-      previousHabitId: fields[1] as String,
-      nextHabitId: fields[2] as String,
+      name: fields[1] as String? ?? '',
+      habitIds: (fields[2] as List?)?.cast<String>() ?? <String>[],
       createdAt: fields[3] as DateTime,
+      description: fields[4] as String?,
+      iconEmoji: fields[5] as String?,
+      chainNotificationsEnabled: fields[6] as bool? ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, HabitStackModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.previousHabitId)
+      ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.nextHabitId)
+      ..write(obj.habitIds)
       ..writeByte(3)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(4)
+      ..write(obj.description)
+      ..writeByte(5)
+      ..write(obj.iconEmoji)
+      ..writeByte(6)
+      ..write(obj.chainNotificationsEnabled);
   }
 }

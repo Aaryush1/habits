@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
@@ -12,9 +13,12 @@ import '../../providers/effort_provider.dart';
 import '../../providers/habits_provider.dart';
 import '../../providers/today_completions_provider.dart';
 import '../../providers/today_habits_provider.dart';
+import '../../../app/router.dart';
+import '../../providers/stacks_provider.dart';
 import '../habits/habit_form_sheet.dart';
 import '../../widgets/common/empty_state.dart';
 import '../../widgets/common/section_header.dart';
+import '../../widgets/common/milestone_celebration.dart';
 import '../../widgets/habit/habit_card.dart';
 import '../habits/habit_detail_screen.dart';
 
@@ -60,19 +64,35 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   data: (habits) {
                     if (habits.isEmpty) {
-                      return EmptyState(
-                        title: 'No habits today',
+                      // Distinguish: no habits exist at all vs just none today.
+                      final totalHabits =
+                          ref.read(habitsProvider).valueOrNull?.length ?? 0;
+                      if (totalHabits == 0) {
+                        // Brand-new user — encourage first habit creation.
+                        return EmptyState(
+                          title: 'Your first habit starts here',
+                          description:
+                              'Small actions, done consistently, add up to remarkable results. What will you start today?',
+                          icon: Icons.rocket_launch_outlined,
+                          actionLabel: 'Create First Habit',
+                          onAction: () async {
+                            final newHabit = await showHabitFormSheet(
+                              context: context,
+                              defaultDisplayOrder: 0,
+                            );
+                            if (newHabit == null || !context.mounted) return;
+                            await ref
+                                .read(habitsProvider.notifier)
+                                .createHabit(newHabit);
+                          },
+                        );
+                      }
+                      // Has habits, just none scheduled today.
+                      return const EmptyState(
+                        title: 'Nothing scheduled today',
                         description:
-                            'Create a habit and it will show up here when scheduled.',
-                        icon: Icons.event_available_outlined,
-                        actionLabel: 'Go To Habits',
-                        onAction: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Use the Habits tab to create one'),
-                            ),
-                          );
-                        },
+                            'Enjoy the rest — your habits will be here when you need them.',
+                        icon: Icons.wb_sunny_outlined,
                       );
                     }
 
@@ -90,8 +110,17 @@ class HomeScreen extends ConsumerWidget {
                     final groupedHabits = _groupByCategory(habits);
 
                     return RefreshIndicator(
-                      onRefresh: () => ref.read(habitsProvider.notifier).reload(),
+                      color: AppColors.accentGold,
+                      onRefresh: () async {
+                        await Future.wait([
+                          ref.read(habitsProvider.notifier).reload(),
+                          ref
+                              .read(completionsProvider(todayKey).notifier)
+                              .reload(),
+                        ]);
+                      },
                       child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         children: [
                           _DailyProgressCard(
                             completed: completedCount,
@@ -138,16 +167,47 @@ class HomeScreen extends ConsumerWidget {
                                       streakLength: streak,
                                       onTap: () {
                                         Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                HabitDetailScreen(habitId: habit.id),
+                                          fadeSlideRoute(
+                                            (_) => HabitDetailScreen(habitId: habit.id),
                                           ),
                                         );
                                       },
                                       onToggle: (_) {
+                                        // Light haptic on every toggle.
+                                        HapticFeedback.lightImpact();
+                                        final wasCompleted = isCompleted;
                                         ref
                                             .read(completionsProvider(todayKey).notifier)
-                                            .toggleCompletion(habitId: habit.id);
+                                            .toggleCompletion(habitId: habit.id)
+                                            .then((_) {
+                                          // Only check milestone when marking complete.
+                                          if (!wasCompleted && context.mounted) {
+                                            // Wait two frames for streak provider to recompute.
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                                if (!context.mounted) return;
+                                                final newStreak =
+                                                    ref.read(currentStreaksProvider).valueOrNull?[habit.id] ?? 0;
+                                                showMilestoneCelebration(
+                                                  context,
+                                                  streak: newStreak,
+                                                  habitName: habit.name,
+                                                );
+                                              });
+                                            });
+
+                                            // Chain prompt: check if next habit in stack is pending
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              if (!context.mounted) return;
+                                              _showChainPromptIfNeeded(
+                                                context,
+                                                ref,
+                                                completedHabitId: habit.id,
+                                                completionByHabitId: completionByHabitId,
+                                              );
+                                            });
+                                          }
+                                        });
                                       },
                                     ),
                                   );
@@ -210,6 +270,44 @@ class HomeScreen extends ConsumerWidget {
           return 'Monthly';
         }
         return 'Dates: ${dates.join(', ')}';
+    }
+  }
+
+  /// Checks if the completed habit is part of a stack and if the next habit
+  /// in that stack is not yet completed today. If so, shows a floating snackbar.
+  static void _showChainPromptIfNeeded(
+    BuildContext context,
+    WidgetRef ref, {
+    required String completedHabitId,
+    required Map<String, bool> completionByHabitId,
+  }) {
+    final stacks = ref.read(stacksProvider).valueOrNull ?? [];
+
+    for (final stack in stacks) {
+      final idx = stack.habitIds.indexOf(completedHabitId);
+      if (idx < 0 || idx >= stack.habitIds.length - 1) continue;
+
+      final nextHabitId = stack.habitIds[idx + 1];
+      final nextAlreadyDone = completionByHabitId[nextHabitId] ?? false;
+      if (nextAlreadyDone) continue;
+
+      // Find next habit name
+      final allHabits = ref.read(habitsProvider).valueOrNull ?? [];
+      final nextHabit = allHabits.where((h) => h.id == nextHabitId).firstOrNull;
+      if (nextHabit == null) continue;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          content: Text(
+            '${stack.iconEmoji != null ? '${stack.iconEmoji!} ' : ''}'
+            'Next in "${stack.name}": ${nextHabit.name}',
+          ),
+        ),
+      );
+      // Only show one prompt
+      return;
     }
   }
 }

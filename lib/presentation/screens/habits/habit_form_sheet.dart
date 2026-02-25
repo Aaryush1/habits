@@ -10,6 +10,9 @@ Future<Habit?> showHabitFormSheet({
   required BuildContext context,
   Habit? initialHabit,
   required int defaultDisplayOrder,
+  /// Called when the user enables the reminder switch for the first time.
+  /// Should request notification permission and return whether it was granted.
+  Future<bool> Function()? onRequestPermission,
 }) async {
   final nameController = TextEditingController(text: initialHabit?.name ?? '');
   final categoryController =
@@ -37,6 +40,15 @@ Future<Habit?> showHabitFormSheet({
 
   // Color: default to gold hex, strip leading # if present
   String selectedColorHex = initialHabit?.colorHex ?? 'E8A838';
+
+  // Reminder toggle + time (minutes since midnight → TimeOfDay for the picker)
+  bool reminderEnabled = initialHabit?.notificationsEnabled ?? false;
+  TimeOfDay? reminderTime = initialHabit?.reminderTime != null
+      ? TimeOfDay(
+          hour: initialHabit!.reminderTime! ~/ 60,
+          minute: initialHabit.reminderTime! % 60,
+        )
+      : null;
 
   // Validation error state
   String? nameError;
@@ -71,6 +83,64 @@ Future<Habit?> showHabitFormSheet({
           void setDurationPreset(int minutes) {
             setModalState(() {
               durationController.text = minutes.toString();
+            });
+          }
+
+          Future<void> pickReminderTime() async {
+            final picked = await showTimePicker(
+              context: context,
+              initialTime: reminderTime ?? TimeOfDay.now(),
+            );
+            if (picked != null) {
+              setModalState(() => reminderTime = picked);
+            }
+          }
+
+          /// Tries to parse a TimeOfDay from the implementation time text field.
+          /// Handles formats like "7:00 AM", "07:30", "9pm".
+          TimeOfDay? parseImplTime(String text) {
+            final t = text.trim().toLowerCase();
+            final ampm = RegExp(
+                r'^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$');
+            final match24 = RegExp(r'^(\d{1,2}):(\d{2})$');
+
+            final mAmpm = ampm.firstMatch(t);
+            if (mAmpm != null) {
+              int h = int.parse(mAmpm.group(1)!);
+              final m = int.tryParse(mAmpm.group(2) ?? '0') ?? 0;
+              final isPm = mAmpm.group(3) == 'pm';
+              if (isPm && h != 12) h += 12;
+              if (!isPm && h == 12) h = 0;
+              if (h < 24 && m < 60) return TimeOfDay(hour: h, minute: m);
+            }
+            final m24 = match24.firstMatch(t);
+            if (m24 != null) {
+              final h = int.parse(m24.group(1)!);
+              final m = int.parse(m24.group(2)!);
+              if (h < 24 && m < 60) return TimeOfDay(hour: h, minute: m);
+            }
+            return null;
+          }
+
+          Future<void> enableReminder() async {
+            // Request permission on first enable
+            if (onRequestPermission != null) {
+              final granted = await onRequestPermission();
+              if (!granted) return;
+            }
+
+            // Auto-suggest from implementation time if no time set yet
+            TimeOfDay? suggested;
+            if (reminderTime == null) {
+              final implText = implementationTimeController.text;
+              if (implText.trim().isNotEmpty) {
+                suggested = parseImplTime(implText);
+              }
+            }
+
+            setModalState(() {
+              reminderEnabled = true;
+              if (suggested != null) reminderTime = suggested;
             });
           }
 
@@ -311,6 +381,101 @@ Future<Habit?> showHabitFormSheet({
                     ),
                     const SizedBox(height: AppSpacing.space16),
 
+                    // --- Reminder ---
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.space12,
+                        vertical: AppSpacing.space8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: reminderEnabled
+                            ? AppColors.twoMinuteBlueSubtle
+                            : AppColors.backgroundSecondary,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: reminderEnabled
+                              ? AppColors.twoMinuteBlue
+                              : AppColors.borderSubtle,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.alarm_rounded,
+                                size: 18,
+                                color: AppColors.twoMinuteBlue,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Daily Reminder',
+                                  style: AppTypography.bodyMedium,
+                                ),
+                              ),
+                              Switch(
+                                value: reminderEnabled,
+                                activeThumbColor: AppColors.twoMinuteBlue,
+                                onChanged: (value) async {
+                                  if (value) {
+                                    await enableReminder();
+                                  } else {
+                                    setModalState(() {
+                                      reminderEnabled = false;
+                                    });
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          if (reminderEnabled) ...[
+                            const SizedBox(height: AppSpacing.space8),
+                            Row(
+                              children: [
+                                ActionChip(
+                                  avatar: const Icon(
+                                    Icons.schedule_rounded,
+                                    size: 16,
+                                    color: AppColors.twoMinuteBlue,
+                                  ),
+                                  label: Text(
+                                    reminderTime != null
+                                        ? reminderTime!.format(context)
+                                        : 'Set time',
+                                    style: TextStyle(
+                                      color: AppColors.twoMinuteBlue,
+                                      fontWeight: reminderTime != null
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  backgroundColor: AppColors.twoMinuteBlueSubtle,
+                                  side: const BorderSide(
+                                      color: AppColors.twoMinuteBlue),
+                                  onPressed: pickReminderTime,
+                                ),
+                                if (reminderTime != null) ...[
+                                  const SizedBox(width: AppSpacing.space8),
+                                  GestureDetector(
+                                    onTap: () => setModalState(
+                                        () => reminderTime = null),
+                                    child: const Icon(
+                                      Icons.clear_rounded,
+                                      size: 18,
+                                      color: AppColors.textTertiary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.space16),
+
                     // --- Identity Statement ---
                     TextField(
                       controller: identityController,
@@ -444,13 +609,16 @@ Future<Habit?> showHabitFormSheet({
                                 notes: initialHabit?.notes,
                                 displayOrder: initialHabit?.displayOrder ??
                                     defaultDisplayOrder,
-                                notificationsEnabled:
-                                    initialHabit?.notificationsEnabled ?? false,
+                                notificationsEnabled: reminderEnabled,
                                 notificationTimes:
                                     initialHabit?.notificationTimes,
                                 notificationTriggerHabitId:
                                     initialHabit?.notificationTriggerHabitId,
                                 durationMinutes: durationMinutes,
+                                reminderTime: reminderEnabled && reminderTime != null
+                                    ? reminderTime!.hour * 60 +
+                                        reminderTime!.minute
+                                    : null,
                               );
                               Navigator.of(context).pop();
                             },

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
+import '../presentation/providers/notification_provider.dart';
 import 'router.dart';
 import '../presentation/screens/home/home_screen.dart';
 import '../presentation/screens/analytics/analytics_hub_screen.dart';
@@ -9,15 +10,17 @@ import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/widgets/navigation/bottom_nav_bar.dart';
 
 /// Main application widget.
-class AtomicHabitsApp extends StatelessWidget {
+class AtomicHabitsApp extends ConsumerWidget {
   const AtomicHabitsApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final navigatorKey = ref.watch(notificationNavigatorKeyProvider);
     return MaterialApp(
       title: 'Atomic Habits',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
+      navigatorKey: navigatorKey,
       onGenerateRoute: onGenerateRoute,
       home: const AppShell(),
     );
@@ -35,7 +38,7 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
+  static const List<Widget> _screens = [
     HomeScreen(),
     HabitsListScreen(),
     AnalyticsHubScreen(),
@@ -45,9 +48,20 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        switchInCurve: Curves.easeIn,
+        switchOutCurve: Curves.easeOut,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: child,
+        ),
+        // Key must change when the selected tab changes so AnimatedSwitcher
+        // actually triggers.
+        child: KeyedSubtree(
+          key: ValueKey<int>(_currentIndex),
+          child: _screens[_currentIndex],
+        ),
       ),
       bottomNavigationBar: _buildBottomNav(),
     );

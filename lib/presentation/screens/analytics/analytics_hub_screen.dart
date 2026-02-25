@@ -45,12 +45,13 @@ class AnalyticsHubScreen extends ConsumerWidget {
                   children: [
                     const SizedBox(height: AppSpacing.space16),
                     Text('Analytics', style: AppTypography.displayMedium),
-                    const Expanded(
+                    Expanded(
                       child: EmptyState(
-                        title: 'No habits yet',
+                        title: 'Building your story',
                         description:
-                            'Create habits from the Habits tab to see your analytics here.',
-                        icon: Icons.analytics_outlined,
+                            'Add habits and complete them for a few days — your streaks, scores, and insights will appear here.',
+                        icon: Icons.auto_graph_outlined,
+                        illustrationColor: AppColors.twoMinuteBlue,
                       ),
                     ),
                   ],
@@ -58,27 +59,32 @@ class AnalyticsHubScreen extends ConsumerWidget {
               );
             }
 
-            return ListView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.space16,
-                vertical: AppSpacing.space16,
+            return RefreshIndicator(
+              color: AppColors.accentGold,
+              onRefresh: () => ref.read(habitsProvider.notifier).reload(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.space16,
+                  vertical: AppSpacing.space16,
+                ),
+                children: [
+                  Text('Analytics', style: AppTypography.displayMedium),
+                  const SizedBox(height: AppSpacing.space20),
+                  _OverallScoreCard(ref: ref),
+                  const SizedBox(height: AppSpacing.space12),
+                  _WeeklyReportCard(ref: ref),
+                  const SizedBox(height: AppSpacing.space12),
+                  _StreaksCard(ref: ref),
+                  const SizedBox(height: AppSpacing.space12),
+                  _HeatmapCard(ref: ref),
+                  const SizedBox(height: AppSpacing.space12),
+                  _HabitRankingsCard(ref: ref),
+                  const SizedBox(height: AppSpacing.space12),
+                  _ScorecardPreviewCard(ref: ref),
+                  const SizedBox(height: AppSpacing.space24),
+                ],
               ),
-              children: [
-                Text('Analytics', style: AppTypography.displayMedium),
-                const SizedBox(height: AppSpacing.space20),
-                _OverallScoreCard(ref: ref),
-                const SizedBox(height: AppSpacing.space12),
-                _WeeklyReportCard(ref: ref),
-                const SizedBox(height: AppSpacing.space12),
-                _StreaksCard(ref: ref),
-                const SizedBox(height: AppSpacing.space12),
-                _HeatmapCard(ref: ref),
-                const SizedBox(height: AppSpacing.space12),
-                _HabitRankingsCard(ref: ref),
-                const SizedBox(height: AppSpacing.space12),
-                _ScorecardPreviewCard(ref: ref),
-                const SizedBox(height: AppSpacing.space24),
-              ],
             );
           },
         ),

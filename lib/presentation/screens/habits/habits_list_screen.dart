@@ -7,9 +7,12 @@ import '../../../core/utils/color_utils.dart';
 import '../../../domain/entities/habit.dart';
 import '../../providers/current_streaks_provider.dart';
 import '../../providers/habits_provider.dart';
+import '../../providers/stacks_provider.dart';
 import '../../widgets/common/empty_state.dart';
 import '../../widgets/common/section_header.dart';
 import '../../widgets/habit/habit_card.dart';
+import '../stacks/stack_form_sheet.dart';
+import '../stacks/stacks_list_screen.dart';
 import 'habit_form_sheet.dart';
 import 'habit_detail_screen.dart';
 
@@ -21,10 +24,13 @@ class HabitsListScreen extends ConsumerStatefulWidget {
   ConsumerState<HabitsListScreen> createState() => _HabitsListScreenState();
 }
 
+enum _HabitsView { habits, stacks }
+
 class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
   String _categoryFilter = 'All';
+  _HabitsView _activeView = _HabitsView.habits;
 
   @override
   void dispose() {
@@ -49,142 +55,192 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
                 subtitle: 'Build your streak one check at a time',
               ),
               const SizedBox(height: AppSpacing.space12),
-              TextField(
-                controller: _searchController,
-                onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
-                decoration: const InputDecoration(
-                  hintText: 'Search habits',
-                  prefixIcon: Icon(Icons.search),
+              // View toggle: Habits | Stacks
+              SizedBox(
+                height: 36,
+                child: Row(
+                  children: [
+                    _ViewToggleChip(
+                      label: 'Habits',
+                      selected: _activeView == _HabitsView.habits,
+                      onSelected: () =>
+                          setState(() => _activeView = _HabitsView.habits),
+                    ),
+                    const SizedBox(width: AppSpacing.space8),
+                    _ViewToggleChip(
+                      label: 'Stacks',
+                      selected: _activeView == _HabitsView.stacks,
+                      onSelected: () =>
+                          setState(() => _activeView = _HabitsView.stacks),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: AppSpacing.space12),
-              habitsAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (error, stackTrace) => const SizedBox.shrink(),
-                data: (habits) {
-                  final categories = {
-                    'All',
-                    ...habits
-                        .map((h) => (h.category == null || h.category!.isEmpty)
-                            ? 'General'
-                            : h.category!)
-                        .toSet(),
-                  };
-                  return SizedBox(
-                    height: 34,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: categories.map((category) {
-                        final selected = _categoryFilter == category;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: AppSpacing.space8),
-                          child: ChoiceChip(
-                            label: Text(category),
-                            selected: selected,
-                            onSelected: (_) => setState(() => _categoryFilter = category),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: AppSpacing.space12),
-              Expanded(
-                child: habitsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, stackTrace) => Center(
-                    child: Text(
-                      'Failed to load habits',
-                      style: AppTypography.bodyMedium,
-                    ),
+              if (_activeView == _HabitsView.habits) ...[
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) =>
+                      setState(() => _query = value.trim().toLowerCase()),
+                  decoration: const InputDecoration(
+                    hintText: 'Search habits',
+                    prefixIcon: Icon(Icons.search),
                   ),
+                ),
+                const SizedBox(height: AppSpacing.space12),
+                habitsAsync.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (error, stackTrace) => const SizedBox.shrink(),
                   data: (habits) {
-                    final filtered = habits.where((habit) {
-                      final category = (habit.category == null || habit.category!.isEmpty)
-                          ? 'General'
-                          : habit.category!;
-                      final categoryMatches =
-                          _categoryFilter == 'All' || category == _categoryFilter;
-                      final queryMatches =
-                          _query.isEmpty || habit.name.toLowerCase().contains(_query);
-                      return categoryMatches && queryMatches;
-                    }).toList();
-
-                    if (filtered.isEmpty) {
-                      return EmptyState(
-                        title: 'No matching habits',
-                        description: 'Try a different search or filter.',
-                        icon: Icons.filter_alt_off_outlined,
-                        actionLabel: 'Clear Filters',
-                        onAction: () {
-                          setState(() {
-                            _query = '';
-                            _searchController.clear();
-                            _categoryFilter = 'All';
-                          });
-                        },
-                      );
-                    }
-
-                    final fullListView = _query.isEmpty && _categoryFilter == 'All';
-                    if (fullListView) {
-                      return ReorderableListView.builder(
-                        itemCount: filtered.length,
-                        onReorder: (oldIndex, newIndex) async {
-                          final reordered = [...filtered];
-                          if (newIndex > oldIndex) {
-                            newIndex -= 1;
-                          }
-                          final moved = reordered.removeAt(oldIndex);
-                          reordered.insert(newIndex, moved);
-                          await ref
-                              .read(habitsProvider.notifier)
-                              .reorderHabits(reordered.map((h) => h.id).toList());
-                        },
-                        itemBuilder: (context, index) {
-                          final habit = filtered[index];
+                    final categories = {
+                      'All',
+                      ...habits
+                          .map((h) =>
+                              (h.category == null || h.category!.isEmpty)
+                                  ? 'General'
+                                  : h.category!)
+                          .toSet(),
+                    };
+                    return SizedBox(
+                      height: 34,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: categories.map((category) {
+                          final selected = _categoryFilter == category;
                           return Padding(
-                            key: ValueKey(habit.id),
-                            padding: const EdgeInsets.only(bottom: AppSpacing.space12),
-                            child: _buildDismissibleHabitCard(context, habit, filtered.length),
+                            padding:
+                                const EdgeInsets.only(right: AppSpacing.space8),
+                            child: ChoiceChip(
+                              label: Text(category),
+                              selected: selected,
+                              onSelected: (_) =>
+                                  setState(() => _categoryFilter = category),
+                            ),
                           );
-                        },
-                      );
-                    }
-
-                    return ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final habit = filtered[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.space12),
-                          child: _buildDismissibleHabitCard(context, habit, filtered.length),
-                        );
-                      },
+                        }).toList(),
+                      ),
                     );
                   },
                 ),
+                const SizedBox(height: AppSpacing.space12),
+              ],
+              Expanded(
+                child: _activeView == _HabitsView.stacks
+                    ? const StacksListScreen()
+                    : habitsAsync.when(
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (error, stackTrace) => Center(
+                          child: Text(
+                            'Failed to load habits',
+                            style: AppTypography.bodyMedium,
+                          ),
+                        ),
+                        data: (habits) {
+                          final filtered = habits.where((habit) {
+                            final category = (habit.category == null ||
+                                    habit.category!.isEmpty)
+                                ? 'General'
+                                : habit.category!;
+                            final categoryMatches = _categoryFilter == 'All' ||
+                                category == _categoryFilter;
+                            final queryMatches = _query.isEmpty ||
+                                habit.name.toLowerCase().contains(_query);
+                            return categoryMatches && queryMatches;
+                          }).toList();
+
+                          if (filtered.isEmpty) {
+                            return EmptyState(
+                              title: 'No matching habits',
+                              description:
+                                  'Try a different search or filter.',
+                              icon: Icons.filter_alt_off_outlined,
+                              actionLabel: 'Clear Filters',
+                              onAction: () {
+                                setState(() {
+                                  _query = '';
+                                  _searchController.clear();
+                                  _categoryFilter = 'All';
+                                });
+                              },
+                            );
+                          }
+
+                          final fullListView =
+                              _query.isEmpty && _categoryFilter == 'All';
+                          if (fullListView) {
+                            return ReorderableListView.builder(
+                              itemCount: filtered.length,
+                              onReorder: (oldIndex, newIndex) async {
+                                final reordered = [...filtered];
+                                if (newIndex > oldIndex) {
+                                  newIndex -= 1;
+                                }
+                                final moved = reordered.removeAt(oldIndex);
+                                reordered.insert(newIndex, moved);
+                                await ref
+                                    .read(habitsProvider.notifier)
+                                    .reorderHabits(
+                                        reordered.map((h) => h.id).toList());
+                              },
+                              itemBuilder: (context, index) {
+                                final habit = filtered[index];
+                                return Padding(
+                                  key: ValueKey(habit.id),
+                                  padding: const EdgeInsets.only(
+                                      bottom: AppSpacing.space12),
+                                  child: _buildDismissibleHabitCard(
+                                      context, habit, filtered.length),
+                                );
+                              },
+                            );
+                          }
+
+                          return ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final habit = filtered[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.space12),
+                                child: _buildDismissibleHabitCard(
+                                    context, habit, filtered.length),
+                              );
+                            },
+                          );
+                        },
+                      ),
               ),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'habits_fab',
-        onPressed: () async {
-          final newHabit = await showHabitFormSheet(
-            context: context,
-            defaultDisplayOrder: habitsAsync.valueOrNull?.length ?? 0,
-          );
-          if (newHabit == null) {
-            return;
-          }
-          await ref.read(habitsProvider.notifier).createHabit(newHabit);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Habit'),
-      ),
+      floatingActionButton: _activeView == _HabitsView.habits
+          ? FloatingActionButton.extended(
+              heroTag: 'habits_fab',
+              onPressed: () async {
+                final newHabit = await showHabitFormSheet(
+                  context: context,
+                  defaultDisplayOrder: habitsAsync.valueOrNull?.length ?? 0,
+                );
+                if (newHabit == null) {
+                  return;
+                }
+                await ref.read(habitsProvider.notifier).createHabit(newHabit);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Habit'),
+            )
+          : FloatingActionButton.extended(
+              heroTag: 'stacks_fab',
+              onPressed: () async {
+                final newStack = await showStackFormSheet(context: context);
+                if (newStack == null) return;
+                await ref.read(stacksProvider.notifier).createStack(newStack);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Stack'),
+            ),
     );
   }
 
@@ -340,5 +396,48 @@ class _HabitsListScreenState extends ConsumerState<HabitsListScreen> {
         return 'Dates: ${dates.join(', ')}';
     }
   }
+}
 
+class _ViewToggleChip extends StatelessWidget {
+  const _ViewToggleChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onSelected,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space16,
+          vertical: AppSpacing.space8,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.accentGoldSubtle
+              : AppColors.backgroundTertiary,
+          borderRadius: AppSpacing.borderRadiusFull,
+          border: Border.all(
+            color: selected
+                ? AppColors.accentGoldMuted
+                : AppColors.borderSubtle,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.labelLarge.copyWith(
+            color: selected ? AppColors.accentGold : AppColors.textSecondary,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
 }

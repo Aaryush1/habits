@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../common/app_card.dart';
+import 'completion_particles.dart';
 import 'habit_checkbox.dart';
 import 'streak_dots.dart';
 
@@ -41,12 +42,16 @@ class HabitCard extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          Container(
-            width: 4,
-            height: 64,
-            decoration: BoxDecoration(
-              color: accent,
-              borderRadius: BorderRadius.circular(12),
+          // Hero-tagged accent bar enables smooth expansion into detail screen.
+          Hero(
+            tag: 'habit_color_$id',
+            child: Container(
+              width: 4,
+              height: 64,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.space12),
@@ -80,7 +85,11 @@ class HabitCard extends StatelessWidget {
           ),
           if (showCheckbox) ...[
             const SizedBox(width: AppSpacing.space8),
-            HabitCheckbox(value: isCompleted, onChanged: onToggle),
+            CompletionParticles(
+              isCompleted: isCompleted,
+              color: accent,
+              child: HabitCheckbox(value: isCompleted, onChanged: onToggle),
+            ),
           ],
           ...?(trailing != null ? [trailing!] : null),
         ],

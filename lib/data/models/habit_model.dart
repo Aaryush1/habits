@@ -22,6 +22,7 @@ class HabitModel {
     this.notificationTimes,
     this.notificationTriggerHabitId,
     this.durationMinutes,
+    this.reminderTime,
   });
 
   String id;
@@ -43,6 +44,7 @@ class HabitModel {
   List<String>? notificationTimes;
   String? notificationTriggerHabitId;
   int? durationMinutes;
+  int? reminderTime;
 
   Habit toEntity() {
     return Habit(
@@ -65,6 +67,7 @@ class HabitModel {
       notificationTimes: notificationTimes,
       notificationTriggerHabitId: notificationTriggerHabitId,
       durationMinutes: durationMinutes,
+      reminderTime: reminderTime,
     );
   }
 
@@ -89,6 +92,7 @@ class HabitModel {
       notificationTimes: entity.notificationTimes,
       notificationTriggerHabitId: entity.notificationTriggerHabitId,
       durationMinutes: entity.durationMinutes,
+      reminderTime: entity.reminderTime,
     );
   }
 }
@@ -125,13 +129,14 @@ class HabitModelAdapter extends TypeAdapter<HabitModel> {
       notificationTimes: (fields[16] as List?)?.cast<String>(),
       notificationTriggerHabitId: fields[17] as String?,
       durationMinutes: fields[18] as int?,
+      reminderTime: fields[19] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, HabitModel obj) {
     writer
-      ..writeByte(19)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -169,6 +174,8 @@ class HabitModelAdapter extends TypeAdapter<HabitModel> {
       ..writeByte(17)
       ..write(obj.notificationTriggerHabitId)
       ..writeByte(18)
-      ..write(obj.durationMinutes);
+      ..write(obj.durationMinutes)
+      ..writeByte(19)
+      ..write(obj.reminderTime);
   }
 }

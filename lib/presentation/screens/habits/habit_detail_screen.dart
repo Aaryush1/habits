@@ -60,9 +60,31 @@ class HabitDetailScreen extends ConsumerWidget {
 
             return CustomScrollView(
               slivers: [
-                // --- Color gradient header ---
+                // --- Color gradient header (Hero matches accent bar tag on HabitCard) ---
                 SliverToBoxAdapter(
-                  child: Container(
+                  child: Hero(
+                    tag: 'habit_color_$habitId',
+                    flightShuttleBuilder: (
+                      flightContext,
+                      animation,
+                      flightDirection,
+                      fromHeroContext,
+                      toHeroContext,
+                    ) {
+                      // During flight, show an expanding colored overlay that morphs
+                      // into the full gradient header.
+                      return AnimatedBuilder(
+                        animation: animation,
+                        builder: (context, _) => Container(
+                          decoration: BoxDecoration(
+                            color: habitColor.withValues(
+                              alpha: animation.value * 0.25,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -123,6 +145,7 @@ class HabitDetailScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  ), // Hero
                 ),
 
                 SliverPadding(
