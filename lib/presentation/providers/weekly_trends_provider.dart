@@ -31,12 +31,19 @@ class WeekSummary {
     required this.completionRate,
     required this.completed,
     required this.scheduled,
+    this.effortCompletedMin = 0,
+    this.effortScheduledMin = 0,
   });
 
   final DateTime weekStart;
   final double completionRate;
   final int completed;
   final int scheduled;
+  final int effortCompletedMin;
+  final int effortScheduledMin;
+
+  double get effortRate =>
+      effortScheduledMin == 0 ? 0.0 : effortCompletedMin / effortScheduledMin;
 }
 
 class WeekDayDetail {
@@ -103,6 +110,8 @@ final weeklyTrendsProvider = FutureProvider<WeeklyTrends>((ref) async {
     final weekStart = rangeStart.add(Duration(days: w * 7));
     var scheduled = 0;
     var completed = 0;
+    var effortScheduled = 0;
+    var effortCompleted = 0;
 
     for (var d = 0; d < 7; d++) {
       final day = weekStart.add(Duration(days: d));
@@ -111,7 +120,13 @@ final weeklyTrendsProvider = FutureProvider<WeeklyTrends>((ref) async {
         if (isHabitScheduledOn(habit, day)) {
           scheduled++;
           final key = '${habit.id}_${day.toIso8601String()}';
-          if (completedSet.contains(key)) completed++;
+          final done = completedSet.contains(key);
+          if (done) completed++;
+          // Track effort for habits with durationMinutes
+          if (habit.durationMinutes != null) {
+            effortScheduled += habit.durationMinutes!;
+            if (done) effortCompleted += habit.durationMinutes!;
+          }
         }
       }
     }
@@ -121,6 +136,8 @@ final weeklyTrendsProvider = FutureProvider<WeeklyTrends>((ref) async {
       completionRate: scheduled == 0 ? 0 : completed / scheduled,
       completed: completed,
       scheduled: scheduled,
+      effortCompletedMin: effortCompleted,
+      effortScheduledMin: effortScheduled,
     ));
   }
 

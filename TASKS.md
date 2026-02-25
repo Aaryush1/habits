@@ -771,8 +771,8 @@ class CompletionModel extends HiveObject {
 - [x] Home screen daily progress card: "X/Y min invested" second line + blue progress bar
 - [x] Analytics hub Overall Score card: "X/Y min invested" line
 - [x] Habit detail screen: effort stat tile (total minutes invested)
-- [ ] Weekly trends drill-down: effort bar chart alongside completion bar chart
-- [ ] Habit rankings: add "effort" sort column (total minutes completed)
+- [x] Weekly trends drill-down: effort bar chart alongside completion bar chart
+- [x] Habit rankings: add "effort" sort column (total minutes completed)
 
 #### Testing Phase 6.8
 - [ ] Adding durationMinutes to new habit persists correctly
@@ -960,7 +960,7 @@ The following features are preserved for future development. They are not blocke
 ## Current Status
 
 **Current Phase:** Phase 6 - Screens (detail redesign + form + duration + widget fixes COMPLETE)
-**Current Task:** Remaining: 6.8c partial (effort in weekly trends + rankings drill-downs)
+**Current Task:** Phase 6 complete. Ready for Phase 7 or v2 features.
 **Last Updated:** 2026-02-24
 **Blockers:** None
 **Design Docs:**

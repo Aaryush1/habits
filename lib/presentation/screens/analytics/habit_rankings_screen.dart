@@ -71,6 +71,13 @@ class _HabitRankingsScreenState extends ConsumerState<HabitRankingsScreen> {
                         ascending: _ascending,
                         onTap: _onSort,
                       ),
+                      _SortButton(
+                        label: 'Effort',
+                        field: RankingSortField.effort,
+                        current: _sortField,
+                        ascending: _ascending,
+                        onTap: _onSort,
+                      ),
                     ],
                   ),
                 ),
@@ -130,6 +137,8 @@ class _HabitRankingsScreenState extends ConsumerState<HabitRankingsScreen> {
           cmp = a.totalCompletions.compareTo(b.totalCompletions);
         case RankingSortField.habitStrength:
           cmp = a.habitStrength.compareTo(b.habitStrength);
+        case RankingSortField.effort:
+          cmp = a.totalEffortMinutes.compareTo(b.totalEffortMinutes);
       }
       return _ascending ? cmp : -cmp;
     });
@@ -284,6 +293,27 @@ class _RankingRow extends StatelessWidget {
                 ],
               ),
             ),
+            if (habit.totalEffortMinutes > 0)
+              SizedBox(
+                width: 44,
+                child: Column(
+                  children: [
+                    Text(
+                      _formatMinutes(habit.totalEffortMinutes),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.twoMinuteBlue,
+                      ),
+                    ),
+                    Text(
+                      'effort',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textTertiary,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const Icon(
               Icons.chevron_right_rounded,
               size: 18,
@@ -294,6 +324,15 @@ class _RankingRow extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatMinutes(int minutes) {
+  if (minutes >= 60) {
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return m == 0 ? '${h}h' : '${h}h${m}m';
+  }
+  return '${minutes}m';
 }
 
 class _StatusChip extends StatelessWidget {

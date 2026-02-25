@@ -90,22 +90,70 @@ class WeeklyTrendsScreen extends ConsumerWidget {
                     ),
                     barGroups: trends.weeks.asMap().entries.map((entry) {
                       final isLatest = entry.key == trends.weeks.length - 1;
+                      final hasEffort = entry.value.effortScheduledMin > 0;
                       return BarChartGroupData(
                         x: entry.key,
                         barRods: [
                           BarChartRodData(
                             toY: entry.value.completionRate,
-                            width: 28,
+                            width: hasEffort ? 18 : 28,
                             borderRadius: BorderRadius.circular(6),
                             color: isLatest
                                 ? AppColors.accentGold
                                 : AppColors.backgroundQuaternary,
                           ),
+                          if (hasEffort)
+                            BarChartRodData(
+                              toY: entry.value.effortRate,
+                              width: 10,
+                              borderRadius: BorderRadius.circular(4),
+                              color: AppColors.twoMinuteBlue,
+                            ),
                         ],
                       );
                     }).toList(),
                   ),
                 ),
+              ),
+              const SizedBox(height: AppSpacing.space8),
+              // Legend
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGold,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Completion',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 10,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: AppColors.twoMinuteBlue,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Effort',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.space24),
 
@@ -153,6 +201,7 @@ class _DeltaHeader extends StatelessWidget {
     final rate = thisWeek?.completionRate ?? 0;
     final delta = trends.thisWeekDelta;
     final deltaPrefix = delta >= 0 ? '+' : '';
+    final hasEffort = thisWeek != null && thisWeek.effortScheduledMin > 0;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.space16),
@@ -177,6 +226,15 @@ class _DeltaHeader extends StatelessWidget {
                 '${(rate * 100).round()}%',
                 style: AppTypography.displayMedium,
               ),
+              if (hasEffort) ...[
+                const SizedBox(height: 2),
+                Text(
+                  '${thisWeek.effortCompletedMin}/${thisWeek.effortScheduledMin} min',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.twoMinuteBlue,
+                  ),
+                ),
+              ],
             ],
           ),
           const Spacer(),

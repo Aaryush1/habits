@@ -16,6 +16,8 @@ class RankedHabit {
     required this.habitStrength,
     required this.status,
     this.colorHex,
+    this.totalEffortMinutes = 0,
+    this.durationMinutes,
   });
 
   final String habitId;
@@ -26,9 +28,11 @@ class RankedHabit {
   final double habitStrength;
   final HabitStatus status;
   final String? colorHex;
+  final int totalEffortMinutes;
+  final int? durationMinutes;
 }
 
-enum RankingSortField { completionRate, currentStreak, totalCompletions, habitStrength }
+enum RankingSortField { completionRate, currentStreak, totalCompletions, habitStrength, effort }
 
 final rankingsProvider = FutureProvider<List<RankedHabit>>((ref) async {
   final habitRepo = ref.watch(habitRepositoryProvider);
@@ -64,6 +68,11 @@ final rankingsProvider = FutureProvider<List<RankedHabit>>((ref) async {
 
     final status = _classifyStatus(completionRate);
 
+    // Effort: total completed minutes = completions * durationMinutes
+    final effortMinutes = habit.durationMinutes != null
+        ? successful.length * habit.durationMinutes!
+        : 0;
+
     ranked.add(RankedHabit(
       habitId: habit.id,
       habitName: habit.name,
@@ -73,6 +82,8 @@ final rankingsProvider = FutureProvider<List<RankedHabit>>((ref) async {
       habitStrength: strength,
       status: status,
       colorHex: habit.colorHex,
+      totalEffortMinutes: effortMinutes,
+      durationMinutes: habit.durationMinutes,
     ));
   }
 
